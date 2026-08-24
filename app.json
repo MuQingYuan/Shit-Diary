@@ -1,0 +1,39 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/record/record",
+    "pages/history/history",
+    "pages/stats/stats",
+    "pages/remind/remind",
+    "pages/community/community",
+    "pages/profile/profile",
+    "pages/guide/guide"
+  ],
+  "subpackages": [
+    { "root": "subpackages/community", "pages": ["rank/rank", "post/post"] },
+    { "root": "subpackages/toolbox", "pages": ["test/test", "knowledge/knowledge"] }
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#F2F2F7",
+    "navigationBarTitleText": "嗯嗯日记",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F2F2F7"
+  },
+  "tabBar": {
+    "color": "#8E8E93",
+    "selectedColor": "#34C759",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/record/record", "text": "记录" },
+      { "pagePath": "pages/stats/stats", "text": "统计" },
+      { "pagePath": "pages/community/community", "text": "广场" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "cloud": true,
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

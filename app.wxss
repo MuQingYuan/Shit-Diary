@@ -1,0 +1,16 @@
+/* 全局主题与基础样式 */
+page {
+  --primary: #5B8C5A;
+  --bg: #F5F7F4;
+  --text: #2B2B2B;
+  --muted: #999999;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "PingFang SC", sans-serif;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 48rpx;
+}

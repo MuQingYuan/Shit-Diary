@@ -1,0 +1,56 @@
+<view class="page">
+  <view class="header">
+    <view class="header-left">
+      <text class="title">嗯嗯日记</text>
+      <text class="date">{{today}}</text>
+    </view>
+    <view class="avatar"><text>我</text></view>
+  </view>
+
+  <view class="card hero">
+    <view class="hero-icon">
+      <text class="hero-symbol">💩</text>
+    </view>
+    <text class="hero-title">{{heroTitle}}</text>
+    <text class="hero-sub">{{heroSub}}</text>
+    <button class="btn-record" bindtap="goRecord">{{btnText}}</button>
+  </view>
+
+  <view class="stats-row">
+    <view class="card stat">
+      <text class="stat-label">连续打卡</text>
+      <text class="stat-num">{{streak}}<text class="stat-unit"> 天</text></text>
+    </view>
+    <view class="card stat">
+      <text class="stat-label">累计记录</text>
+      <text class="stat-num">{{total}}<text class="stat-unit"> 次</text></text>
+    </view>
+  </view>
+
+  <view class="card trend">
+    <view class="trend-head">
+      <text class="card-title">本周趋势</text>
+      <text class="trend-tag">近 7 天</text>
+    </view>
+    <view class="bars">
+      <view class="bar-item" wx:for="{{bars}}" wx:key="index">
+        <view class="bar {{item.h>=160?'hot':''}}" style="height:{{item.h}}rpx;"></view>
+        <text class="bar-day">{{item.day}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card remind">
+    <view class="remind-left">
+      <text class="card-title">晨间提醒</text>
+      <text class="remind-sub">每天 08:00 · 服务通知</text>
+    </view>
+    <switch checked="{{remindOn}}" color="#34C759" bindchange="onRemind"/>
+  </view>
+
+  <view class="card about">
+    <text class="card-title">肠道周报</text>
+    <text class="about-sub">连续记录 7 天，解锁你的专属肠道报告</text>
+    <text class="about-link" bindtap="goStats">去看看 ›</text>
+  </view>
+</view>

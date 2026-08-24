@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="title">记录一次嗯嗯</view>
+
+  <view class="field">
+    <text class="label">Bristol 类型</text>
+    <view class="bristol-grid">
+      <view wx:for="{{bristolList}}" wx:key="type"
+            class="bristol-item {{form.bristolType===item.type?'active':''}}"
+            bindtap="onPickBristol" data-type="{{item.type}}">
+        <text class="b-type">{{item.type}}</text>
+        <text class="b-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="field">
+    <text class="label">时长：{{form.durationSec}} 秒</text>
+    <slider min="0" max="1800" step="30" value="{{form.durationSec}}" bindchange="onDuration" show-value/>
+  </view>
+
+  <view class="field">
+    <text class="label">症状（可多选）</text>
+    <view class="tags">
+      <view wx:for="{{symptomOptions}}" wx:key="*this"
+            class="tag {{form.symptomTags.indexOf(item)>-1?'active':''}}"
+            bindtap="onToggleSymptom" data-v="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="field">
+    <text class="label">备注</text>
+    <textarea value="{{form.note}}" bindinput="onNote" maxlength="200" placeholder="今天感觉如何？"/>
+  </view>
+
+  <button class="submit btn-primary" bindtap="onSubmit">保存记录</button>
+</view>
