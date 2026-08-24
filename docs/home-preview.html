@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嗯嗯日记 · iOS 风格首页预览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #18181d;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+    padding: 32px 0;
+  }
+  .title {
+    color: #e8e8ec;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: #9a9aa2;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .phone-frame {
+    width: 320px;
+    border-radius: 52px;
+    background: #0b0b0e;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+  .screen {
+    position: relative;
+    background: #F2F2F7;
+    border-radius: 40px;
+    height: 720px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: #1C1C1E;
+  }
+  .island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92px;
+    height: 24px;
+    border-radius: 13px;
+    background: #0b0b0e;
+    z-index: 5;
+  }
+  .statusbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 28px 2px;
+    position: relative;
+    z-index: 2;
+  }
+  .time { font-size: 14px; font-weight: 600; }
+  .icons { display: flex; align-items: center; gap: 5px; }
+  .content { flex: 1; overflow: hidden; padding: 14px 17px 12px; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin: 2px 4px 14px; }
+  .h-title { font-size: 26px; font-weight: 600; letter-spacing: -0.4px; }
+  .h-date { font-size: 12px; color: #8E8E93; margin-top: 3px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #34C759; color: #fff; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card { background: #fff; border-radius: 18px; margin-bottom: 12px; }
+  .hero { padding: 22px 20px 20px; text-align: center; }
+  .hero-icon {
+    width: 66px; height: 66px; border-radius: 50%;
+    background: #EAF6EC; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 34px;
+  }
+  .hero-title { font-size: 17px; font-weight: 600; }
+  .hero-sub { font-size: 12px; color: #8E8E93; margin: 4px 0 16px; }
+  .btn-record {
+    background: #34C759; color: #fff; border-radius: 13px;
+    padding: 12px 0; font-size: 15px; font-weight: 600; text-align: center;
+  }
+  .stats { display: flex; gap: 12px; }
+  .stat { flex: 1; padding: 14px 16px; }
+  .stat-label { font-size: 12px; color: #8E8E93; }
+  .stat-num { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .stat-unit { font-size: 12px; color: #8E8E93; font-weight: 400; }
+  .trend { padding: 16px; }
+  .trend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .trend-tag { font-size: 11px; color: #8E8E93; }
+  .bars { display: flex; align-items: flex-end; justify-content: space-between; }
+  .bar { width: 21px; border-radius: 5px; background: #C8E6CB; }
+  .bar.hot { background: #34C759; }
+  .days { display: flex; justify-content: space-between; padding: 0 8px; margin-top: 6px; }
+  .day { font-size: 11px; color: #8E8E93; }
+  .remind { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .remind-sub { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+  .switch {
+    width: 48px; height: 29px; border-radius: 15px;
+    background: #34C759; position: relative; flex-shrink: 0;
+  }
+  .knob {
+    position: absolute; top: 2.5px; right: 2.5px;
+    width: 24px; height: 24px; border-radius: 50%; background: #fff;
+  }
+  .tabbar {
+    background: #fff; border-top: 0.5px solid rgba(60, 60, 67, 0.12);
+    display: flex; justify-content: space-around; padding: 7px 6px 20px;
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #8E8E93; font-size: 11px; }
+  .tab.active { color: #34C759; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="title">嗯嗯日记</div>
+  <div class="subtitle">iOS 系统风格首页 · 分组卡片 / 大标题 / 系统绿强调</div>
+
+  <div class="phone-frame">
+    <div class="screen">
+      <div class="island"></div>
+
+      <div class="statusbar">
+        <span class="time">9:41</span>
+        <div class="icons">
+          <svg width="17" height="11" viewBox="0 0 17 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#1C1C1E"/><rect x="4.6" y="5" width="3" height="6" rx="1" fill="#1C1C1E"/><rect x="9.2" y="2.6" width="3" height="8.4" rx="1" fill="#1C1C1E"/><rect x="13.8" y="0" width="3" height="11" rx="1" fill="#1C1C1E"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11"><path d="M8 2.5a8.6 8.6 0 0 1 6.5 2.8l-1.1 1.2A6.7 6.7 0 0 0 8 4.5 6.7 6.7 0 0 0 2.6 6.5L1.5 5.3A8.6 8.6 0 0 1 8 2.5z" fill="#1C1C1E"/><path d="M8 6a5 5 0 0 1 3.8 1.7l-1.1 1.2A3.1 3.1 0 0 0 8 7.9c-.7 0-1.4.3-1.7 1l-1.1-1.2A5 5 0 0 1 8 6z" fill="#1C1C1E"/><circle cx="8" cy="9.6" r="1.3" fill="#1C1C1E"/></svg>
+          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" fill="none" stroke="#1C1C1E" opacity="0.4"/><rect x="2" y="2" width="16" height="8" rx="2" fill="#1C1C1E"/><path d="M23 4.5v3a2.5 2.5 0 0 0 0-3z" fill="#1C1C1E" opacity="0.4"/></svg>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="header">
+          <div>
+            <div class="h-title">嗯嗯日记</div>
+            <div class="h-date">8月24日 · 周一</div>
+          </div>
+          <div class="avatar">我</div>
+        </div>
+
+        <div class="card hero">
+          <div class="hero-icon">💩</div>
+          <div class="hero-title">今天还未记录</div>
+          <div class="hero-sub">点一下，记录此刻的顺畅</div>
+          <div class="btn-record">立即记录</div>
+        </div>
+
+        <div class="stats">
+          <div class="card stat">
+            <div class="stat-label">连续打卡</div>
+            <div class="stat-num">3 <span class="stat-unit">天</span></div>
+          </div>
+          <div class="card stat">
+            <div class="stat-label">累计记录</div>
+            <div class="stat-num">12 <span class="stat-unit">次</span></div>
+          </div>
+        </div>
+
+        <div class="card trend">
+          <div class="trend-head">
+            <div class="card-title">本周趋势</div>
+            <div class="trend-tag">近 7 天</div>
+          </div>
+          <div class="bars">
+            <div class="bar" style="height:18px;"></div>
+            <div class="bar" style="height:27px;"></div>
+            <div class="bar hot" style="height:37px;"></div>
+            <div class="bar" style="height:22px;"></div>
+            <div class="bar hot" style="height:46px;"></div>
+            <div class="bar" style="height:30px;"></div>
+            <div class="bar hot" style="height:41px;"></div>
+          </div>
+          <div class="days">
+            <span class="day">一</span><span class="day">二</span><span class="day">三</span><span class="day">四</span><span class="day">五</span><span class="day">六</span><span class="day">日</span>
+          </div>
+        </div>
+
+        <div class="card remind">
+          <div>
+            <div class="card-title">晨间提醒</div>
+            <div class="remind-sub">每天 08:00 · 服务通知</div>
+          </div>
+          <div class="switch"><div class="knob"></div></div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab active">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 11l8-7 8 7v8a2 2 0 0 1-2 2h-4v-6h-4v6H6a2 2 0 0 1-2-2v-8z"/></svg>
+          <span>首页</span>
+        </div>
+        <div class="tab">
+          <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5v7M8.5 12h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>记录</span>
+        </div>
+        <div class="tab">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path d="M5 20v-6M10 20V8M15 20v-9M20 20V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>统计</span>
+        </div>
+        <div class="tab">
+          <svg width="24" height="24" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.4" fill="currentColor"/><path d="M3.6 19.6c0-3 2.4-5 5.4-5s5.4 2 5.4 5v.4H3.6v-.4z" fill="currentColor"/><circle cx="17" cy="10.4" r="2.6" fill="currentColor" opacity="0.55"/><path d="M15.4 14.8c2.3.5 4.6 2.1 4.6 4.8h-4v-.6c0-1.7-.2-3-1-4.2z" fill="currentColor" opacity="0.55"/></svg>
+          <span>广场</span>
+        </div>
+        <div class="tab">
+          <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-4 0-7 2.2-7 5v1h14v-1c0-2.8-3-5-7-5z"/></svg>
+          <span>我的</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
