@@ -30,7 +30,7 @@ Page({
   load() {
     this.setData({ loading: true });
     const isWeek = this.data.period === 'week';
-    const range = isWeek ? this.currentWeekRange() : this.lastRange(30);
+    const range = isWeek ? this.currentWeekRange() : this.currentMonthRange();
 
     const db = wx.cloud.database();
     db.collection('records')
@@ -53,13 +53,13 @@ Page({
     return { start: start.getTime(), end: end.getTime() };
   },
 
-  // 最近 n 天滚动窗口（用于「本月」）
-  lastRange(n) {
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    const start = new Date();
+  // 当前自然月（1 号 00:00:00 ~ 月末 23:59:59）
+  currentMonthRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
     start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - n + 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    end.setHours(23, 59, 59, 999);
     return { start: start.getTime(), end: end.getTime() };
   },
 
@@ -103,12 +103,14 @@ Page({
         });
       });
     } else {
-      // 本月：最近 30 天滚动窗口
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date();
+      // 本月：当前自然月 1 号 ~ 月末
+      const now = new Date();
+      const y = now.getFullYear(), mo = now.getMonth();
+      const daysInMonth = new Date(y, mo + 1, 0).getDate();
+      for (let dnum = 1; dnum <= daysInMonth; dnum++) {
+        const d = new Date(y, mo, dnum);
         d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() - i);
-        const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const date = `${y}-${pad(mo + 1)}-${pad(dnum)}`;
         const count = countByDay[date] || 0;
         bars.push({
           date,
@@ -142,7 +144,7 @@ Page({
 
     this.setData({
       total,
-      avgPerDay: (total / (isWeek ? 7 : 30)).toFixed(1),
+      avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1),
       avgDur: avgSec ? Math.round(avgSec / 6) / 10 + ' 分钟' : '—',
       idealPct: total ? Math.round((ideal / total) * 100) + '%' : '0%',
       bars,

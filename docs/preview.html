@@ -810,8 +810,9 @@ const App = {
   statsData(period) {
     const isWeek = period !== 'month';
     const days = isWeek ? currentWeekDays() : (() => {
-      const a = [];
-      for (let i = 29; i >= 0; i--) { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i); a.push(fmtDate(d)); }
+      const now = new Date(); const y = now.getFullYear(), mo = now.getMonth();
+      const dim = new Date(y, mo + 1, 0).getDate(); const a = [];
+      for (let dnum = 1; dnum <= dim; dnum++) { a.push(fmtDate(new Date(y, mo, dnum))); }
       return a;
     })();
     const list = DB.records.filter((r) => days.includes(r.date));
@@ -832,7 +833,7 @@ const App = {
     const symMap = {};
     list.forEach((r) => r.symptomTags.forEach((t) => { symMap[t] = (symMap[t] || 0) + 1; }));
     const symptoms = Object.keys(symMap).map((k) => ({ name: k, count: symMap[k] })).sort((a, b) => b.count - a.count).slice(0, 5);
-    return { total, avgPerDay: (total / (isWeek ? 7 : 30)).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms };
+    return { total, avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms };
   },
   statsPeriod: 'week',
   renderStats() {
