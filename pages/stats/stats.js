@@ -29,25 +29,57 @@ Page({
 
   load() {
     this.setData({ loading: true });
-    const n = this.data.period === 'week' ? 7 : 30;
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - n + 1);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
+    const isWeek = this.data.period === 'week';
+    const range = isWeek ? this.currentWeekRange() : this.lastRange(30);
 
     const db = wx.cloud.database();
     db.collection('records')
-      .where({ timestamp: db.command.gte(start.getTime()).and(db.command.lte(end.getTime())) })
+      .where({ timestamp: db.command.gte(range.start).and(db.command.lte(range.end)) })
       .orderBy('timestamp', 'desc')
       .limit(500)
       .get()
-      .then((res) => this.compute(res.data, n))
-      .catch(() => { this.compute([], n); })
+      .then((res) => this.compute(res.data, isWeek))
+      .catch(() => { this.compute([], isWeek); })
       .finally(() => this.setData({ loading: false }));
   },
 
-  compute(list, n) {
+  // 当前自然周（周一 00:00:00 ~ 周日 23:59:59）
+  currentWeekRange() {
+    const days = this.currentWeekDays();
+    const start = new Date(days[0]);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(days[6]);
+    end.setHours(23, 59, 59, 999);
+    return { start: start.getTime(), end: end.getTime() };
+  },
+
+  // 最近 n 天滚动窗口（用于「本月」）
+  lastRange(n) {
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - n + 1);
+    return { start: start.getTime(), end: end.getTime() };
+  },
+
+  // 本周一至周日的 7 个 Date（周一开头）
+  currentWeekDays() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const offset = (today.getDay() + 6) % 7; // 距本周一的天数
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - offset);
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  },
+
+  compute(list, isWeek) {
     const total = list.length;
     const durList = list.filter((r) => r.durationSec > 0);
     const avgSec = durList.length ? durList.reduce((s, r) => s + r.durationSec, 0) / durList.length : 0;
@@ -57,19 +89,35 @@ Page({
     const countByDay = {};
     list.forEach((r) => { countByDay[r.date] = (countByDay[r.date] || 0) + 1; });
     const bars = [];
-    for (let i = n - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - i);
-      const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const count = countByDay[date] || 0;
-      bars.push({
-        date,
-        day: WEEK_LABELS[d.getDay()],
-        count,
-        h: Math.max(16, Math.min(180, count * 52)),
-        hot: count >= 3,
+    if (isWeek) {
+      // 本周：周一到周日，按自然周顺序
+      this.currentWeekDays().forEach((d) => {
+        const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const count = countByDay[date] || 0;
+        bars.push({
+          date,
+          day: WEEK_LABELS[d.getDay()],
+          count,
+          h: Math.max(16, Math.min(180, count * 52)),
+          hot: count >= 3,
+        });
       });
+    } else {
+      // 本月：最近 30 天滚动窗口
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const count = countByDay[date] || 0;
+        bars.push({
+          date,
+          day: WEEK_LABELS[d.getDay()],
+          count,
+          h: Math.max(16, Math.min(180, count * 52)),
+          hot: count >= 3,
+        });
+      }
     }
 
     // Bristol 分布（带配色）
@@ -94,7 +142,7 @@ Page({
 
     this.setData({
       total,
-      avgPerDay: (total / n).toFixed(1),
+      avgPerDay: (total / (isWeek ? 7 : 30)).toFixed(1),
       avgDur: avgSec ? Math.round(avgSec / 6) / 10 + ' 分钟' : '—',
       idealPct: total ? Math.round((ideal / total) * 100) + '%' : '0%',
       bars,
