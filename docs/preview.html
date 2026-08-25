@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>嗯嗯日记 · 交互预览版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: #17171c;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    color: #1C1C1E;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .phone {
+    width: 100%;
+    max-width: 430px;
+    height: 100vh;
+    height: 100dvh;
+    background: #F2F2F7;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  @media (min-width: 520px) {
+    .phone { border-radius: 40px; box-shadow: 0 30px 90px rgba(0,0,0,.65); height: 94vh; height: 94dvh; }
+  }
+  .statusbar {
+    background: #F2F2F7;
+    padding: 10px 24px 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 11px; }
+
+  .navbar {
+    background: #F2F2F7;
+    padding: 8px 18px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .nav-left { display: flex; align-items: center; gap: 8px; }
+  .nav-back { font-size: 26px; color: #34C759; background: none; border: none; padding: 2px 8px 2px 0; font-weight: 600; cursor: pointer; }
+  .nav-title { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+  .nav-date { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .circle-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; border: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: #34C759; cursor: pointer;
+  }
+  .circle-btn:active { transform: scale(.94); background: #e6e6eb; }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #34C759; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; cursor: pointer; overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  #page { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 16px 20px; scrollbar-width: none; }
+  #page::-webkit-scrollbar { display: none; }
+
+  .card {
+    background: #fff; border-radius: 18px; padding: 20px;
+    margin-bottom: 12px; cursor: pointer; transition: transform .12s, opacity .12s;
+  }
+  .card:active { transform: scale(.985); opacity: .9; }
+  .card.flat { cursor: default; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-sub { font-size: 12px; color: #8E8E93; margin-top: 4px; }
+
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .hero-icon {
+    width: 74px; height: 74px; border-radius: 50%;
+    background: #EAF6EC; font-size: 34px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s;
+  }
+  .hero-icon.done { background: #34C759; color: #fff; font-size: 28px; }
+  .hero-title { font-size: 17px; font-weight: 600; margin-top: 12px; }
+  .hero-sub { font-size: 12px; color: #8E8E93; margin-top: 5px; }
+  .btn-primary {
+    margin-top: 16px; width: 100%;
+    background: #34C759; color: #fff; border: none;
+    border-radius: 13px; padding: 13px 0;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn-primary:active { opacity: .85; transform: scale(.99); }
+  .btn-primary:disabled { opacity: .55; }
+  .link-btn { font-size: 12px; color: #34C759; margin-top: 12px; background: none; border: none; cursor: pointer; }
+
+  .stat-row { display: flex; gap: 12px; }
+  .stat { flex: 1; position: relative; }
+  .stat-label { font-size: 12px; color: #8E8E93; }
+  .stat-num { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .stat-num .unit { font-size: 12px; color: #8E8E93; font-weight: 400; }
+  .stat-arrow { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: #C7C7CC; font-size: 22px; }
+
+  .trend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .trend-tag { font-size: 11px; color: #8E8E93; }
+  .bars { display: flex; align-items: flex-end; justify-content: space-between; height: 96px; padding: 0 4px; }
+  .bar-item { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .bar-count { font-size: 10px; color: #34C759; font-weight: 600; }
+  .bar { width: 20px; border-radius: 4px; background: #C8E6CB; min-height: 5px; }
+  .bar.hot { background: #34C759; }
+  .bar-day { font-size: 10px; color: #8E8E93; }
+  .empty { text-align: center; color: #8E8E93; font-size: 12px; padding: 26px 0; }
+
+  .remind { display: flex; justify-content: space-between; align-items: center; }
+  .remind-main { flex: 1; }
+  .remind-sub { font-size: 12px; color: #8E8E93; margin-top: 4px; }
+
+  .switch { width: 50px; height: 30px; border-radius: 15px; background: #E5E5EA; position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+  .switch.on { background: #34C759; }
+  .knob { position: absolute; top: 2.5px; left: 2.5px; width: 25px; height: 25px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch.on .knob { left: 22.5px; }
+
+  .seg { display: flex; background: #E9E9EE; border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+  .seg-item { flex: 1; text-align: center; padding: 8px 0; border-radius: 8px; font-size: 13px; color: #8E8E93; cursor: pointer; transition: all .2s; }
+  .seg-item.on { background: #fff; color: #1C1C1E; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+
+  .metric-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .metric { width: calc(50% - 5px); background: #fff; border-radius: 14px; padding: 14px 16px; }
+  .metric-label { font-size: 11px; color: #8E8E93; }
+  .metric-num { font-size: 22px; font-weight: 700; color: #34C759; margin-top: 4px; }
+  .metric-num.small { font-size: 16px; }
+
+  .dist-item { display: flex; align-items: center; margin-top: 12px; font-size: 12px; }
+  .dist-name { width: 96px; color: #555; flex-shrink: 0; }
+  .dist-track { flex: 1; height: 8px; background: #F0F0F3; border-radius: 4px; margin: 0 10px; overflow: hidden; }
+  .dist-fill { height: 100%; background: #34C759; border-radius: 4px; min-width: 3px; transition: width .4s; }
+  .dist-pct { width: 42px; text-align: right; color: #8E8E93; flex-shrink: 0; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: #EAF6EC; color: #2E9E4F; font-size: 12px; padding: 6px 14px; border-radius: 14px; }
+  .chip.gray { background: #F0F0F3; color: #8E8E93; }
+
+  .field { margin-bottom: 16px; }
+  .label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .label .hint { color: #8E8E93; font-weight: 400; font-size: 11px; }
+  .bristol-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .bristol-item {
+    width: 56px; padding: 8px 0; border-radius: 12px;
+    background: #fff; border: 2px solid #eee; text-align: center; cursor: pointer; transition: all .15s;
+  }
+  .bristol-item.active { border-color: #34C759; background: #EAF6EC; }
+  .bristol-item .bt { font-size: 18px; font-weight: 700; color: #34C759; }
+  .bristol-item .bd { font-size: 10px; color: #8E8E93; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    padding: 8px 16px; border-radius: 16px; background: #F0F0F3;
+    color: #555; font-size: 12px; cursor: pointer; transition: all .15s;
+  }
+  .tag.active { background: #34C759; color: #fff; }
+  input[type="text"], input[type="date"], input[type="time"], textarea, select {
+    width: 100%; border: none; background: #fff; border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; font-family: inherit; color: #1C1C1E;
+  }
+  textarea { height: 72px; resize: none; }
+  .picker-row { display: flex; gap: 10px; }
+  .picker-row input { flex: 1; }
+
+  .cell-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 0; border-bottom: 1px solid rgba(60,60,67,.08);
+  }
+  .cell-row:last-child { border-bottom: none; }
+  .cell-label { font-size: 14px; }
+  .cell-value { font-size: 14px; color: #34C759; font-weight: 600; }
+  .days { display: flex; gap: 8px; }
+  .day-chip {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #F0F0F3; color: #8E8E93; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s;
+  }
+  .day-chip.on { background: #34C759; color: #fff; font-weight: 600; }
+
+  .list-group { margin-bottom: 18px; }
+  .group-date { font-size: 12px; color: #8E8E93; margin: 0 4px 8px; }
+  .list-row {
+    display: flex; align-items: center; background: #fff;
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer;
+  }
+  .list-row:active { opacity: .85; }
+  .row-time { font-size: 14px; font-weight: 600; width: 70px; }
+  .row-body { flex: 1; display: flex; gap: 10px; align-items: center; }
+  .row-bristol { background: #EAF6EC; color: #2E9E4F; font-size: 11px; padding: 3px 10px; border-radius: 8px; }
+  .row-dur { font-size: 12px; color: #8E8E93; }
+  .row-arrow { color: #C7C7CC; font-size: 18px; }
+
+  .guide-item {
+    display: flex; align-items: center; padding: 14px 0;
+    border-bottom: 1px solid rgba(60,60,67,.06); cursor: pointer;
+  }
+  .guide-item:last-child { border-bottom: none; }
+  .g-badge {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #EAF6EC; color: #2E9E4F; font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .g-info { flex: 1; margin-left: 12px; }
+  .g-name { font-size: 14px; font-weight: 600; }
+  .g-desc { font-size: 11px; color: #8E8E93; margin-top: 3px; line-height: 1.5; }
+  .g-arrow { color: #C7C7CC; font-size: 18px; }
+  .faq-item { padding: 14px 0; border-bottom: 1px solid rgba(60,60,67,.06); }
+  .faq-q { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .faq-a { font-size: 12px; color: #8E8E93; line-height: 1.7; margin-top: 8px; }
+
+  .profile-head { display: flex; flex-direction: column; align-items: center; padding: 8px 0 16px; }
+  .profile-avatar {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: #EAF6EC; color: #2E9E4F; font-size: 30px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-nick { font-size: 18px; font-weight: 700; margin-top: 10px; }
+  .profile-edit { font-size: 12px; color: #34C759; margin-top: 4px; background: none; border: none; cursor: pointer; }
+  .mini-stat-row { display: flex; background: #fff; border-radius: 14px; padding: 14px 0; margin-bottom: 12px; }
+  .mini-stat { flex: 1; text-align: center; }
+  .mini-stat .n { font-size: 20px; font-weight: 700; color: #34C759; }
+  .mini-stat .l { font-size: 11px; color: #8E8E93; margin-top: 2px; }
+
+  .community-hero {
+    background: linear-gradient(135deg, #34C759, #2E9E4F);
+    color: #fff; border-radius: 18px; padding: 24px 20px; text-align: center; margin-bottom: 12px;
+  }
+  .community-hero .big { font-size: 36px; }
+  .community-hero .t { font-size: 17px; font-weight: 700; margin-top: 8px; }
+  .community-hero .s { font-size: 12px; opacity: .85; margin-top: 4px; }
+
+  /* tabbar */
+  .tabbar {
+    background: #fff; border-top: 1px solid rgba(60,60,67,.12);
+    display: flex; justify-content: space-around; padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+    flex-shrink: 0;
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #8E8E93; font-size: 10px; cursor: pointer; padding: 4px 10px; border: none; background: none; }
+  .tab .ic { font-size: 20px; line-height: 1; }
+  .tab.active { color: #34C759; font-weight: 600; }
+
+  /* toast / modal */
+  #toast {
+    position: absolute; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
+    background: rgba(20,20,24,.88); color: #fff; font-size: 13px;
+    padding: 10px 20px; border-radius: 20px; opacity: 0; pointer-events: none;
+    transition: all .25s; z-index: 60; white-space: nowrap; max-width: 80%; overflow: hidden; text-overflow: ellipsis;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,.45);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px;
+  }
+  #modal.show { display: flex; }
+  .modal-box { width: 300px; background: #fff; border-radius: 18px; padding: 24px 20px 18px; text-align: center; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-body { font-size: 13px; color: #555; line-height: 1.7; margin: 12px 0 18px; text-align: left; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btn { flex: 1; padding: 10px 0; border-radius: 12px; font-size: 14px; border: none; cursor: pointer; }
+  .modal-btn.cancel { background: #F0F0F3; color: #555; }
+  .modal-btn.ok { background: #34C759; color: #fff; font-weight: 600; }
+  .modal-btn.danger { background: #FFF1F0; color: #E24B4A; font-weight: 600; }
+  .note { font-size: 11px; color: #B25E09; text-align: center; margin-top: 12px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar">
+    <span id="sb-time">9:41</span>
+    <span class="sb-icons">📶 WiFi 🔋</span>
+  </div>
+  <div class="navbar" id="navbar"></div>
+  <div id="page"></div>
+  <div class="tabbar" id="tabbar"></div>
+  <div id="toast"></div>
+  <div id="modal"></div>
+</div>
+
+<script>
+/* ================= 数据层（localStorage 模拟云数据库） ================= */
+const LS_KEY = 'shit-diary-data';
+const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+const BRISTOL = [
+  { type: 1, name: '1型 · 硬块', desc: '分离硬块，通常意味着便秘' },
+  { type: 2, name: '2型 · 块状', desc: '块状香肠，偏硬' },
+  { type: 3, name: '3型 · 裂纹', desc: '香肠状有裂纹，正常' },
+  { type: 4, name: '4型 · 理想', desc: '光滑柔软，最理想状态' },
+  { type: 5, name: '5型 · 软团', desc: '软团状，偏软' },
+  { type: 6, name: '6型 · 糊状', desc: '糊状，接近腹泻' },
+  { type: 7, name: '7型 · 水样', desc: '完全水样，腹泻' }
+];
+const SYMPTOMS = ['费力', '出血', '疼痛', '腹胀', '未排净', '紧急'];
+const AMOUNTS = ['少', '中', '多'];
+const MOODS = ['轻松', '正常', '不适'];
+const COLORS = ['棕', '深棕', '浅棕', '绿', '黑', '红', '其他'];
+
+const pad = (n) => (n < 10 ? '0' + n : '' + n);
+const fmtDate = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const fmtHM = (d) => pad(d.getHours()) + ':' + pad(d.getMinutes());
+const todayStr = () => fmtDate(new Date());
+const cnToday = () => { const d = new Date(); return (d.getMonth() + 1) + '月' + d.getDate() + '日 · 周' + WEEK[d.getDay()]; };
+const durText = (sec) => { if (!sec) return '—'; if (sec < 60) return sec + '秒'; const m = Math.floor(sec / 60); return sec % 60 ? m + '分' + (sec % 60) + '秒' : m + '分钟'; };
+
+let DB = null;
+function loadDB() {
+  try { DB = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) { DB = null; }
+  if (!DB || !DB.records) seedDB();
+}
+function saveDB() { localStorage.setItem(LS_KEY, JSON.stringify(DB)); }
+function seedDB() {
+  const records = [];
+  const now = new Date();
+  // 生成近 7 天演示数据
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const count = i === 6 ? 1 : (i % 2 === 0 ? 2 : 1);
+    for (let k = 0; k < count; k++) {
+      const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 7 + (i * 3 + k * 2) % 12, 15 + (i * 17 + k * 33) % 45);
+      records.push({
+        id: 'demo' + i + '_' + k,
+        date: fmtDate(t), time: fmtHM(t), timestamp: t.getTime(),
+        bristolType: [3, 4, 4, 4, 5, 2, 6][(i + k) % 7],
+        durationSec: 180 + ((i * 90 + k * 120) % 720),
+        color: COLORS[i % 4], amount: AMOUNTS[(i + k) % 3],
+        symptomTags: i === 0 && k === 1 ? ['腹胀'] : (i % 4 === 0 ? ['费力'] : []),
+        mood: MOODS[(i + k) % 3], note: i === 6 ? '早起的第一次，状态不错' : ''
+      });
+    }
+  }
+  DB = {
+    records,
+    users: { nickname: '我', avatarUrl: '', streakDays: 1, totalRecords: records.length },
+    reminders: { enabled: true, time: '08:00', repeatDays: [1, 2, 3, 4, 5, 6, 0] }
+  };
+  saveDB();
+}
+function resetDB() { localStorage.removeItem(LS_KEY); seedDB(); }
+
+/* ================= 全局工具 ================= */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+}
+let modalCb = null;
+function openModal(title, body, buttons) {
+  const el = document.getElementById('modal');
+  el.innerHTML = '<div class="modal-box">' +
+    '<div class="modal-title">' + title + '</div>' +
+    '<div class="modal-body">' + body + '</div>' +
+    '<div class="modal-btns">' + buttons.map((b, i) =>
+      '<button class="modal-btn ' + b.cls + '" data-i="' + i + '">' + b.text + '</button>').join('') +
+    '</div></div>';
+  el.classList.add('show');
+  modalCb = (i) => {
+    el.classList.remove('show');
+    const b = buttons[i];
+    if (b && b.onClick) b.onClick();
+  };
+  el.querySelectorAll('.modal-btn').forEach((btn) => btn.addEventListener('click', () => modalCb(+btn.dataset.i)));
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+
+/* ================= 路由（tab + 子页栈） ================= */
+const App = {
+  tab: 'home',
+  stack: [],          // 子页栈（history/remind/guide）
+  recordForm: null,
+
+  init() {
+    loadDB();
+    this.recordForm = {
+      date: todayStr(), time: fmtHM(new Date()),
+      bristolType: 4, durationSec: 300, color: '', amount: '中',
+      symptomTags: [], mood: '正常', note: ''
+    };
+    this.renderNav();
+    this.renderTabbar();
+    this.render();
+    setInterval(() => { document.getElementById('sb-time').textContent = fmtHM(new Date()); }, 30000);
+  },
+
+  go(tab) {
+    this.stack = [];
+    this.tab = tab;
+    this.renderNav();
+    this.render();
+  },
+
+  push(page) {
+    this.stack.push(page);
+    this.renderNav();
+    this.render();
+  },
+  back() {
+    this.stack.pop();
+    this.renderNav();
+    this.render();
+  },
+
+  currentPage() { return this.stack.length ? this.stack[this.stack.length - 1] : this.tab; },
+
+  renderNav() {
+    const nav = document.getElementById('navbar');
+    const page = this.currentPage();
+    const sub = this.stack.length > 0;
+    if (sub) {
+      const titles = { history: '历史记录', remind: '提醒设置', guide: '新手引导' };
+      nav.innerHTML = '<div class="nav-left"><button class="nav-back" onclick="App.back()">‹ 返回</button></div>' +
+        '<div class="nav-title" style="font-size:18px">' + titles[page] + '</div><div class="nav-actions"></div>';
+      return;
+    }
+    if (page === 'home') {
+      nav.innerHTML = '<div><div class="nav-title">嗯嗯日记</div><div class="nav-date">' + cnToday() + '</div></div>' +
+        '<div class="nav-actions">' +
+        '<button class="circle-btn" onclick="App.share()">↗</button>' +
+        '<div class="avatar" onclick="App.go(\'profile\')">' + avatarHtml() + '</div></div>';
+    } else if (page === 'stats') {
+      nav.innerHTML = '<div class="nav-title" style="font-size:24px">统计</div><div class="nav-actions"></div>';
+    } else if (page === 'community') {
+      nav.innerHTML = '<div class="nav-title" style="font-size:24px">广场</div><div class="nav-actions"></div>';
+    } else if (page === 'profile') {
+      nav.innerHTML = '<div class="nav-title" style="font-size:24px">我的</div><div class="nav-actions"></div>';
+    } else if (page === 'record') {
+      nav.innerHTML = '<div class="nav-title" style="font-size:24px">记录</div><div class="nav-actions"></div>';
+    }
+  },
+
+  renderTabbar() {
+    const el = document.getElementById('tabbar');
+    if (this.stack.length) { el.innerHTML = ''; return; }
+    const tabs = [
+      { k: 'home', ic: '🏠', t: '首页' },
+      { k: 'record', ic: '➕', t: '记录' },
+      { k: 'stats', ic: '📊', t: '统计' },
+      { k: 'community', ic: '👥', t: '广场' },
+      { k: 'profile', ic: '👤', t: '我的' }
+    ];
+    el.innerHTML = tabs.map((t) =>
+      '<button class="tab ' + (this.tab === t.k ? 'active' : '') + '" onclick="App.go(\'' + t.k + '\')">' +
+      '<span class="ic">' + t.ic + '</span><span>' + t.t + '</span></button>').join('');
+  },
+
+  render() {
+    const page = document.getElementById('page');
+    const p = this.currentPage();
+    page.innerHTML = this[this.renderMap[p]]();
+    page.scrollTop = 0;
+  },
+
+  share() {
+    toast('已复制分享卡片（演示）— 正式版调用微信分享');
+  },
+
+  /* ================= 首页 ================= */
+  renderMap: { home: 'renderHome', record: 'renderRecord', stats: 'renderStats', community: 'renderCommunity', profile: 'renderProfile', history: 'renderHistory', remind: 'renderRemind', guide: 'renderGuide' },
+
+  homeData() {
+    const records = DB.records;
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+      days.push(fmtDate(d));
+    }
+    const byDay = {};
+    records.forEach((r) => { byDay[r.date] = (byDay[r.date] || 0) + 1; });
+    const bars = days.map((d, i) => {
+      const c = byDay[d] || 0;
+      return { date: d, day: WEEK[new Date(d + 'T00:00:00').getDay()], count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2 };
+    });
+    const todayCount = byDay[days[6]] || 0;
+    const weekTotal = records.filter((r) => days.includes(r.date)).length;
+    const streak = calcStreak();
+    return { days, bars, todayCount, weekTotal, streak, avgPerDay: (weekTotal / 7).toFixed(1) };
+  },
+
+  renderHome() {
+    const d = this.homeData();
+    const recorded = d.todayCount > 0;
+    const barsHtml = d.bars.map((b) =>
+      '<div class="bar-item"><span class="bar-count">' + (b.count ? b.count : '') + '</span>' +
+      '<div class="bar ' + (b.hot ? 'hot' : '') + '" style="height:' + b.h + 'px"></div>' +
+      '<span class="bar-day">' + b.day + '</span></div>').join('');
+    return '' +
+      '<div class="card hero flat">' +
+        '<div class="hero-icon ' + (recorded ? 'done' : '') + '">' + (recorded ? '✓' : '💩') + '</div>' +
+        '<div class="hero-title">' + (recorded ? '今日已记录 ' + d.todayCount + ' 次' : '今天还未记录') + '</div>' +
+        '<div class="hero-sub">' + (recorded ? '规律打卡，从每一天开始' : '点一下，3 秒完成记录') + '</div>' +
+        '<button class="btn-primary" onclick="App.quickRecord()">' + (recorded ? '再记一次' : '立即记录') + '</button>' +
+        '<button class="link-btn" onclick="App.go(\'record\')">需要详细记录？去记录页 ›</button>' +
+      '</div>' +
+      '<div class="stat-row">' +
+        '<div class="card stat" onclick="App.go(\'stats\')"><div class="stat-label">连续打卡</div>' +
+          '<div class="stat-num">' + d.streak + '<span class="unit"> 天</span></div><span class="stat-arrow">›</span></div>' +
+        '<div class="card stat" onclick="App.go(\'stats\')"><div class="stat-label">累计记录</div>' +
+          '<div class="stat-num">' + DB.records.length + '<span class="unit"> 次</span></div><span class="stat-arrow">›</span></div>' +
+      '</div>' +
+      '<div class="card" onclick="App.go(\'stats\')">' +
+        '<div class="trend-head"><span class="card-title">本周趋势</span>' +
+          '<span class="trend-tag">' + (d.weekTotal ? '共 ' + d.weekTotal + ' 次 · 日均 ' + d.avgPerDay : '近 7 天') + '</span></div>' +
+        (d.weekTotal ? '<div class="bars">' + barsHtml + '</div>' : '<div class="empty">本周还没有记录，点我去打卡 ›</div>') +
+      '</div>' +
+      '<div class="card remind flat">' +
+        '<div class="remind-main" onclick="App.push(\'remind\')"><div class="card-title">晨间提醒</div>' +
+          '<div class="remind-sub">' + (DB.reminders.enabled ? '每天 ' + DB.reminders.time + ' · 服务通知' : '已关闭 · 点按开启提醒') + '</div></div>' +
+        '<div class="switch ' + (DB.reminders.enabled ? 'on' : '') + '" onclick="App.toggleRemind(event)"><div class="knob"></div></div>' +
+      '</div>' +
+      '<div class="card" onclick="App.go(\'stats\')">' +
+        '<div class="card-title">肠道周报</div>' +
+        '<div class="card-sub">连续记录 7 天，解锁专属肠道报告</div>' +
+        '<div class="card-sub" style="color:#34C759;margin-top:8px;font-weight:600">去看看 ›</div>' +
+      '</div>';
+  },
+
+  quickRecord() {
+    const now = new Date();
+    DB.records.push({
+      id: 'q' + Date.now(), date: fmtDate(now), time: fmtHM(now), timestamp: now.getTime(),
+      bristolType: 4, durationSec: 300, color: '', amount: '中', symptomTags: [], mood: '正常', note: ''
+    });
+    DB.users.totalRecords = DB.records.length;
+    DB.users.streakDays = calcStreak();
+    saveDB();
+    toast('已记录 💩');
+    this.render();
+  },
+
+  toggleRemind(e) {
+    e.stopPropagation();
+    DB.reminders.enabled = !DB.reminders.enabled;
+    saveDB();
+    toast(DB.reminders.enabled ? '提醒已开启' : '提醒已关闭');
+    this.render();
+  },
+
+  /* ================= 记录表单 ================= */
+  renderRecord() {
+    const f = this.recordForm;
+    const bristol = BRISTOL.map((b) =>
+      '<div class="bristol-item ' + (f.bristolType === b.type ? 'active' : '') + '" onclick="App.pickBristol(' + b.type + ')">' +
+      '<div class="bt">' + b.type + '</div><div class="bd">' + b.name.slice(3) + '</div></div>').join('');
+    const tags = SYMPTOMS.map((t) =>
+      '<span class="tag ' + (f.symptomTags.includes(t) ? 'active' : '') + '" onclick="App.toggleSymptom(\'' + t + '\')">' + t + '</span>').join('');
+    const moods = MOODS.map((m) =>
+      '<span class="tag ' + (f.mood === m ? 'active' : '') + '" onclick="App.pickMood(\'' + m + '\')">' + m + '</span>').join('');
+    const amounts = AMOUNTS.map((a) =>
+      '<span class="tag ' + (f.amount === a ? 'active' : '') + '" onclick="App.pickAmount(\'' + a + '\')">' + a + '</span>').join('');
+    const colors = COLORS.map((c) =>
+      '<span class="tag ' + (f.color === c ? 'active' : '') + '" onclick="App.pickColor(\'' + c + '\')">' + c + '</span>').join('');
+    return '' +
+      '<div class="card flat"><div class="field">' +
+        '<span class="label">Bristol 类型</span>' +
+        '<div class="bristol-grid">' + bristol + '</div></div>' +
+        '<div class="field"><span class="label">时长 <span class="hint" id="durLabel">' + durText(f.durationSec) + '</span></span>' +
+        '<input type="range" min="0" max="1800" step="30" value="' + f.durationSec + '" oninput="App.recordForm.durationSec=+this.value;document.getElementById(\'durLabel\').textContent=App.durTextShort(+this.value)"></div>' +
+        '<div class="field"><span class="label">时间</span><div class="picker-row">' +
+        '<input type="date" value="' + f.date + '" onchange="App.recordForm.date=this.value">' +
+        '<input type="time" value="' + f.time + '" onchange="App.recordForm.time=this.value"></div></div>' +
+        '<div class="field"><span class="label">量</span><div class="tag-row">' + amounts + '</div></div>' +
+        '<div class="field"><span class="label">颜色</span><div class="tag-row">' + colors + '</div></div>' +
+        '<div class="field"><span class="label">症状（可多选）</span><div class="tag-row">' + tags + '</div></div>' +
+        '<div class="field"><span class="label">心情</span><div class="tag-row">' + moods + '</div></div>' +
+        '<div class="field"><span class="label">备注</span>' +
+        '<textarea placeholder="今天感觉如何？" oninput="App.recordForm.note=this.value">' + f.note + '</textarea></div>' +
+        '<button class="btn-primary" onclick="App.submitRecord()">保存记录</button></div>';
+  },
+  renderRecordForm() { this.render(); },
+  pickBristol(t) { this.recordForm.bristolType = t; this.render(); },
+  durTextShort(sec) { return durText(sec); },
+  toggleSymptom(t) {
+    const i = this.recordForm.symptomTags.indexOf(t);
+    i > -1 ? this.recordForm.symptomTags.splice(i, 1) : this.recordForm.symptomTags.push(t);
+    this.render();
+  },
+  pickMood(m) { this.recordForm.mood = m; this.render(); },
+  pickAmount(a) { this.recordForm.amount = a; this.render(); },
+  pickColor(c) { this.recordForm.color = c; this.render(); },
+  submitRecord() {
+    const f = this.recordForm;
+    DB.records.push({
+      id: 'r' + Date.now(), date: f.date, time: f.time,
+      timestamp: new Date(f.date + 'T' + f.time + ':00').getTime(),
+      bristolType: f.bristolType, durationSec: f.durationSec,
+      color: f.color, amount: f.amount, symptomTags: f.symptomTags.slice(), mood: f.mood, note: f.note
+    });
+    DB.users.totalRecords = DB.records.length;
+    DB.users.streakDays = calcStreak();
+    saveDB();
+    toast('已记录，数据已保存');
+    this.go('stats');
+  },
+
+  /* ================= 统计 ================= */
+  statsData(period) {
+    const n = period === 'month' ? 30 : 7;
+    const days = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+      days.push(fmtDate(d));
+    }
+    const list = DB.records.filter((r) => days.includes(r.date));
+    const byDay = {};
+    list.forEach((r) => { byDay[r.date] = (byDay[r.date] || 0) + 1; });
+    const bars = days.map((d) => {
+      const c = byDay[d] || 0;
+      return { date: d, day: WEEK[new Date(d + 'T00:00:00').getDay()], count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2 };
+    });
+    const total = list.length;
+    const durList = list.filter((r) => r.durationSec > 0);
+    const avgSec = durList.length ? durList.reduce((s, r) => s + r.durationSec, 0) / durList.length : 0;
+    const ideal = list.filter((r) => r.bristolType === 4).length;
+    const dist = BRISTOL.map((b) => {
+      const c = list.filter((r) => r.bristolType === b.type).length;
+      return { ...b, count: c, pct: total ? Math.round(c / total * 100) : 0 };
+    });
+    const symMap = {};
+    list.forEach((r) => r.symptomTags.forEach((t) => { symMap[t] = (symMap[t] || 0) + 1; }));
+    const symptoms = Object.keys(symMap).map((k) => ({ name: k, count: symMap[k] })).sort((a, b) => b.count - a.count).slice(0, 5);
+    return { total, avgPerDay: (total / n).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms };
+  },
+  statsPeriod: 'week',
+  renderStats() {
+    const d = this.statsData(this.statsPeriod);
+    const barsHtml = d.bars.map((b) =>
+      '<div class="bar-item"><span class="bar-count">' + (b.count ? b.count : '') + '</span>' +
+      '<div class="bar ' + (b.hot ? 'hot' : '') + '" style="height:' + b.h + 'px"></div>' +
+      '<span class="bar-day">' + b.day + '</span></div>').join('');
+    return '' +
+      '<div class="seg"><div class="seg-item ' + (this.statsPeriod === 'week' ? 'on' : '') + '" onclick="App.switchPeriod(\'week\')">本周</div>' +
+      '<div class="seg-item ' + (this.statsPeriod === 'month' ? 'on' : '') + '" onclick="App.switchPeriod(\'month\')">本月</div></div>' +
+      '<div class="metric-grid">' +
+        '<div class="metric"><div class="metric-label">记录次数</div><div class="metric-num">' + d.total + '</div></div>' +
+        '<div class="metric"><div class="metric-label">日均次数</div><div class="metric-num">' + d.avgPerDay + '</div></div>' +
+        '<div class="metric"><div class="metric-label">平均时长</div><div class="metric-num small">' + d.avgDur + '</div></div>' +
+        '<div class="metric"><div class="metric-label">理想型占比</div><div class="metric-num small">' + d.idealPct + '</div></div>' +
+      '</div>' +
+      '<div class="card flat"><div class="trend-head"><span class="card-title">每日次数</span>' +
+        '<span class="trend-tag" onclick="App.push(\'history\')" style="color:#34C759;cursor:pointer">明细 ›</span></div>' +
+        '<div class="bars">' + barsHtml + '</div></div>' +
+      '<div class="card flat"><div class="card-title">Bristol 类型分布</div>' +
+        d.dist.map((b) => '<div class="dist-item"><span class="dist-name">' + b.name + '</span>' +
+          '<div class="dist-track"><div class="dist-fill" style="width:' + b.pct + '%"></div></div>' +
+          '<span class="dist-pct">' + b.pct + '%</span></div>').join('') + '</div>' +
+      '<div class="card flat"><div class="card-title">高频症状</div>' +
+        (d.symptoms.length
+          ? '<div class="chip-row">' + d.symptoms.map((s) => '<span class="chip">' + s.name + ' ×' + s.count + '</span>').join('') + '</div>'
+          : '<div class="empty">本周期暂无症状记录</div>') + '</div>';
+  },
+  switchPeriod(p) { this.statsPeriod = p; this.render(); },
+
+  /* ================= 广场 ================= */
+  renderCommunity() {
+    const d = this.homeData();
+    return '' +
+      '<div class="community-hero"><div class="big">🎉</div>' +
+        '<div class="t">本周打卡 ' + d.weekTotal + ' 次</div>' +
+        '<div class="s">连续 ' + d.streak + ' 天 · 肠道规律看得见</div>' +
+        '<button class="btn-primary" style="margin-top:14px;background:#fff;color:#2E9E4F" onclick="App.share()">把战绩分享给好友</button></div>' +
+      '<div class="card" onclick="App.comingSoon()"><div class="card-title">🏆 好友打卡排行榜</div>' +
+        '<div class="card-sub">和朋友一起比拼连续打卡天数</div><span style="float:right;color:#C7C7CC;font-size:20px">›</span></div>' +
+      '<div class="card" onclick="App.comingSoon()"><div class="card-title">🌱 肠道知识科普</div>' +
+        '<div class="card-sub">便秘、腹泻、饮食调理实用指南</div><span style="float:right;color:#C7C7CC;font-size:20px">›</span></div>' +
+      '<div class="card" onclick="App.comingSoon()"><div class="card-title">🧪 趣味肠道测试</div>' +
+        '<div class="card-sub">测测你的肠道年龄与健康指数</div><span style="float:right;color:#C7C7CC;font-size:20px">›</span></div>' +
+      '<div class="card" style="background:#EAF6EC;text-align:center" onclick="App.go(\'record\')">' +
+        '<span style="color:#2E9E4F;font-size:13px;font-weight:600">还没有记录？现在开始你的第一条 ›</span></div>';
+  },
+  comingSoon() { toast('该功能即将上线，敬请期待'); },
+
+  /* ================= 我的 ================= */
+  renderProfile() {
+    const u = DB.users;
+    const d = this.homeData();
+    const todayCount = d.todayCount;
+    return '' +
+      '<div class="card flat"><div class="profile-head">' +
+        '<div class="profile-avatar" onclick="App.editProfile()">' + (u.avatarUrl ? '<img src="' + u.avatarUrl + '">' : u.nickname[0]) + '</div>' +
+        '<div class="profile-nick">' + u.nickname + '</div>' +
+        '<button class="profile-edit" onclick="App.editProfile()">编辑昵称与头像</button></div>' +
+        '<div class="mini-stat-row">' +
+          '<div class="mini-stat"><div class="n">' + u.streakDays + '</div><div class="l">连续天数</div></div>' +
+          '<div class="mini-stat"><div class="n">' + u.totalRecords + '</div><div class="l">累计记录</div></div>' +
+          '<div class="mini-stat"><div class="n">' + todayCount + '</div><div class="l">今日</div></div>' +
+        '</div></div>' +
+      '<div class="card flat">' +
+        '<div class="cell-row" onclick="App.push(\'guide\')"><span class="cell-label">新手引导</span><span class="cell-value">›</span></div>' +
+        '<div class="cell-row" onclick="App.push(\'remind\')"><span class="cell-label">提醒设置</span><span class="cell-value">›</span></div>' +
+        '<div class="cell-row" onclick="App.push(\'history\')"><span class="cell-label">历史记录</span><span class="cell-value">›</span></div>' +
+        '<div class="cell-row" onclick="App.share()"><span class="cell-label">分享给好友</span><span class="cell-value">›</span></div>' +
+        '<div class="cell-row" onclick="App.confirmReset()"><span class="cell-label">重置演示数据</span><span class="cell-value">›</span></div>' +
+        '<div class="cell-row" onclick="App.about()"><span class="cell-label">关于与免责声明</span><span class="cell-value">›</span></div>' +
+      '</div>';
+  },
+  editProfile() {
+    openModal('编辑资料', '<input type="text" id="mp-nick" placeholder="输入昵称" value="' + DB.users.nickname + '">', [
+      { text: '取消', cls: 'cancel' },
+      { text: '保存', cls: 'ok', onClick: () => {
+        const v = document.getElementById('mp-nick').value.trim() || '我';
+        DB.users.nickname = v;
+        saveDB(); toast('已保存'); this.render();
+      } }
+    ]);
+    setTimeout(() => { const el = document.getElementById('mp-nick'); if (el) el.focus(); }, 100);
+  },
+  confirmReset() {
+    openModal('重置演示数据', '将清空所有演示记录并重新生成近 7 天数据。', [
+      { text: '取消', cls: 'cancel' },
+      { text: '重置', cls: 'danger', onClick: () => { resetDB(); toast('已重置'); this.render(); } }
+    ]);
+  },
+  about() {
+    openModal('关于「嗯嗯日记」', '本小程序用于个人排便健康记录与习惯参考，所有数据仅作记录与趋势展示，不构成任何医疗建议。如有身体不适，请及时就医。', [
+      { text: '知道了', cls: 'ok' }
+    ]);
+  },
+
+  /* ================= 历史 ================= */
+  renderHistory() {
+    const sorted = DB.records.slice().sort((a, b) => b.timestamp - a.timestamp);
+    const map = {};
+    sorted.forEach((r) => { (map[r.date] = map[r.date] || []).push(r); });
+    const dates = Object.keys(map).sort().reverse();
+    if (!dates.length) return '<div class="empty" style="padding:80px 0">📖 还没有记录，快去打卡吧</div>';
+    return dates.map((date) =>
+      '<div class="list-group"><div class="group-date">' + fmtGroup(date) + '</div>' +
+      map[date].map((r) =>
+        '<div class="list-row" onclick="App.showDetail(\'' + r.id + '\')">' +
+        '<span class="row-time">' + r.time + '</span>' +
+        '<div class="row-body"><span class="row-bristol">' + r.bristolType + ' 型</span>' +
+        '<span class="row-dur">' + durText(r.durationSec) + '</span></div>' +
+        '<span class="row-arrow">›</span></div>').join('') +
+      '</div>').join('');
+  },
+  showDetail(id) {
+    const r = DB.records.find((x) => x.id === id);
+    if (!r) return;
+    const b = BRISTOL.find((x) => x.type === r.bristolType);
+    openModal('记录详情',
+      '<div class="detail-body">' +
+      '<div class="drow"><span>时间</span><b>' + r.date + ' ' + r.time + '</b></div>' +
+      '<div class="drow"><span>Bristol</span><b>' + (b ? b.name : '未知') + '</b></div>' +
+      '<div class="drow"><span>时长</span><b>' + durText(r.durationSec) + '</b></div>' +
+      '<div class="drow"><span>症状</span><b>' + (r.symptomTags.length ? r.symptomTags.join('、') : '无') + '</b></div>' +
+      '<div class="drow"><span>备注</span><b>' + (r.note || '无') + '</b></div></div>' +
+      '<style>.detail-body .drow{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}.detail-body .drow span{color:#8E8E93}.detail-body .drow b{font-weight:500}</style>',
+      [
+        { text: '删除', cls: 'danger', onClick: () => {
+          DB.records = DB.records.filter((x) => x.id !== id);
+          DB.users.totalRecords = DB.records.length;
+          saveDB(); toast('已删除'); this.render();
+        } },
+        { text: '关闭', cls: 'ok' }
+      ]);
+  },
+
+  /* ================= 提醒 ================= */
+  renderRemind() {
+    const r = DB.reminders;
+    const days = [1, 2, 3, 4, 5, 6, 0].map((k) =>
+      '<div class="day-chip ' + (r.repeatDays.includes(k) ? 'on' : '') + '" onclick="App.toggleDay(' + k + ')">' + WEEK[k] + '</div>').join('');
+    return '' +
+      '<div class="card flat">' +
+        '<div class="cell-row"><span class="cell-label">开启提醒</span>' +
+        '<div class="switch ' + (r.enabled ? 'on' : '') + '" onclick="App.remindSwitch()"><div class="knob"></div></div></div>' +
+        '<div class="cell-row"><span class="cell-label">提醒时间</span>' +
+        '<input type="time" value="' + r.time + '" style="width:110px;text-align:right" onchange="App.remindTime=this.value"></div>' +
+      '</div>' +
+      '<div class="card flat"><div class="card-title" style="margin-bottom:12px">重复周期</div>' +
+        '<div class="days">' + days + '</div></div>' +
+      '<div class="card flat"><div class="card-title" style="margin-bottom:8px">推送方式</div>' +
+        '<div class="card-sub">提醒将通过微信「服务通知」推送（演示版仅保存设置）。</div></div>' +
+      '<button class="btn-primary" onclick="App.saveRemind()">保存设置</button>' +
+      '<div class="note">⚠️ 演示版提醒仅保存在本地，正式版需接入微信订阅消息。</div>';
+  },
+  remindTime: '08:00',
+  remindSwitch() { DB.reminders.enabled = !DB.reminders.enabled; saveDB(); this.render(); },
+  toggleDay(k) {
+    const i = DB.reminders.repeatDays.indexOf(k);
+    i > -1 ? DB.reminders.repeatDays.splice(i, 1) : DB.reminders.repeatDays.push(k);
+    saveDB(); this.render();
+  },
+  saveRemind() {
+    DB.reminders.time = this.remindTime || DB.reminders.time;
+    saveDB();
+    toast('已保存');
+    this.back();
+  },
+
+  /* ================= 引导 ================= */
+  guideActive: 4,
+  faqOpen: 0,
+  renderGuide() {
+    const bristolHtml = BRISTOL.map((b) =>
+      '<div class="guide-item" onclick="App.guideActive=' + b.type + ';App.render()">' +
+      '<div class="g-badge">' + b.type + '</div><div class="g-info"><div class="g-name">' + b.name + '</div>' +
+      (this.guideActive === b.type ? '<div class="g-desc">' + b.desc + '</div>' : '') + '</div>' +
+      '<span class="g-arrow">›</span></div>').join('');
+    const faq = [
+      { q: '为什么要记录排便？', a: '排便习惯是肠道健康的晴雨表。连续记录可以发现频率、形态、时间的变化规律，及时察觉异常。' },
+      { q: 'Bristol 分型是什么？', a: '医学上常用的粪便形态分类（1-7 型）。4 型是理想状态；1-2 型偏便秘，6-7 型偏腹泻。' },
+      { q: '多久一次算正常？', a: '正常范围是每天 3 次到每周 3 次，个体差异大。更重要的是你自己的规律是否稳定。' },
+      { q: '数据会泄露吗？', a: '记录默认仅自己可见（云数据库「仅创建者可读写」），分享的内容才对外可见。' },
+      { q: '这是医疗建议吗？', a: '不是。本小程序仅作记录与参考，不构成诊断或治疗建议。持续异常请及时就医。' }
+    ];
+    const faqHtml = faq.map((f, i) =>
+      '<div class="faq-item"><div class="faq-q" onclick="App.faqOpen=' + i + ';App.render()">' +
+      '<span>' + f.q + '</span><span style="color:#C7C7CC">' + (this.faqOpen === i ? '▾' : '▸') + '</span></div>' +
+      (this.faqOpen === i ? '<div class="faq-a">' + f.a + '</div>' : '') + '</div>').join('');
+    return '' +
+      '<div class="card flat" style="background:#34C759;color:#fff;text-align:center">' +
+        '<div style="font-size:17px;font-weight:700">看懂你的每一次「嗯嗯」</div>' +
+        '<div style="font-size:12px;opacity:.85;margin-top:6px">3 分钟学会用 Bristol 分型读懂肠道信号</div>' +
+        '<button class="btn-primary" style="margin-top:14px;background:#fff;color:#2E9E4F" onclick="App.go(\'record\')">去记录一次</button></div>' +
+      '<div class="card flat"><div class="card-title" style="margin-bottom:6px">Bristol 大便分型（1-7）</div>' + bristolHtml + '</div>' +
+      '<div class="card flat"><div class="card-title" style="margin-bottom:6px">常见问题</div>' + faqHtml + '</div>' +
+      '<div class="note">⚠️ 本小程序数据仅作记录与参考，不构成医疗建议。持续异常请及时就医。</div>';
+  }
+};
+
+/* ================= 辅助函数 ================= */
+function calcStreak() {
+  const set = new Set(DB.records.map((r) => r.date));
+  let cur = new Date(); cur.setHours(0, 0, 0, 0);
+  if (!set.has(fmtDate(cur))) cur = new Date(cur.getTime() - 86400000);
+  let n = 0;
+  while (set.has(fmtDate(cur))) { n++; cur = new Date(cur.getTime() - 86400000); }
+  return n;
+}
+function fmtGroup(date) {
+  const d = new Date(date + 'T00:00:00');
+  return Number(date.slice(5, 7)) + '月' + Number(date.slice(8, 10)) + '日 周' + WEEK[d.getDay()];
+}
+function avatarHtml() {
+  const u = DB.users;
+  return u.avatarUrl ? '<img src="' + u.avatarUrl + '">' : u.nickname[0];
+}
+
+App.init();
+</script>
+</body>
+</html>
