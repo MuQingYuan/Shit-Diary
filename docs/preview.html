@@ -119,7 +119,8 @@
   .bar-day { font-size: 10px; color: #8E8E93; }
 
   .chart-canvas { display: block; width: 100%; }
-  .chart-canvas.trend { height: 120px; }
+  .chart-canvas.trend { height: 200px; }
+  .trend-hint { font-size: 11px; color: #8E8E93; margin: 8px 0 4px; }
   .ring-wrap { display: flex; align-items: center; margin-top: 12px; }
   .ring-canvas { width: 130px; height: 130px; flex-shrink: 0; }
   .ring-legend { flex: 1; margin-left: 16px; }
@@ -129,32 +130,6 @@
   .legend-name { flex: 1; font-size: 12px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .legend-pct { width: 42px; text-align: right; font-size: 12px; color: #8E8E93; flex-shrink: 0; }
   .empty { text-align: center; color: #8E8E93; font-size: 12px; padding: 26px 0; }
-
-  /* ===== 本月月历网格 ===== */
-  .cal-head { display: flex; margin: 6px 0; }
-  .cal-h { flex: 1; text-align: center; font-size: 11px; color: #8E8E93; }
-  .cal-grid { display: flex; flex-wrap: wrap; }
-  .cal-cell {
-    width: 14.28%; box-sizing: border-box;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 7px 0; border-radius: 9px; margin-bottom: 5px; cursor: pointer;
-    user-select: none;
-  }
-  .cal-cell.blank { visibility: hidden; cursor: default; }
-  .cal-d { font-size: 12px; color: #1C1C1E; line-height: 1.2; }
-  .cal-c { font-size: 11px; font-weight: 600; margin-top: 2px; }
-  .int-0 { background: #F2F2F7; } .int-0 .cal-c { color: #C7C7CC; }
-  .int-1 { background: #E3F5E8; } .int-1 .cal-c { color: #34C759; }
-  .int-2 { background: #B9E8C6; } .int-2 .cal-c { color: #1F8F45; }
-  .int-3 { background: #34C759; } .int-3 .cal-d, .int-3 .cal-c { color: #fff; }
-  .cal-cell.today { outline: 1.5px solid #34C759; outline-offset: -1.5px; }
-  .cal-cell.sel { box-shadow: 0 0 0 3px rgba(52,199,89,0.4); }
-  .cal-cell.sel .cal-c { color: #1F8F45; }
-  .cal-cell.sel.int-3 .cal-c { color: #fff; }
-  .cal-detail { display: flex; align-items: baseline; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #EFEFF4; }
-  .cd-date { font-size: 13px; color: #8E8E93; }
-  .cd-num { font-size: 17px; font-weight: 600; color: #34C759; }
-  .cd-dur { font-size: 12px; color: #8E8E93; }
 
   .remind { display: flex; justify-content: space-between; align-items: center; }
   .remind-main { flex: 1; }
@@ -423,16 +398,36 @@ function hexA(hex, a) {
   const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
   return `rgba(${r},${g},${b},${a})`;
 }
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
 function drawTrend(ctx, w, h, opt) {
   const labels = opt.labels || [], values = opt.values || [], color = opt.color || '#34C759';
-  const n = values.length; if (!n) return;
-  const padL = 10, padR = 10, padT = 22, padB = 24;
+  const n = values.length; if (!n) return null;
+  const showYAxis = opt.showYAxis !== false;
+  const padL = showYAxis ? 28 : 10;
+  const padR = 10, padT = 22, padB = 24;
   const plotW = w - padL - padR, plotH = h - padT - padB;
-  const maxV = Math.max(opt.maxY || 0, ...values, 1);
-  ctx.strokeStyle = '#ECECEF'; ctx.lineWidth = 1;
-  for (let g = 0; g <= 2; g++) { const y = Math.round(padT + (plotH * g) / 2) + 0.5; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); }
+  let maxV = Math.max(opt.maxY || 0, ...values, 1);
+  maxV = Math.ceil(maxV); if (maxV < 1) maxV = 1;
   const xAt = (i) => (n === 1 ? padL + plotW / 2 : padL + (plotW * i) / (n - 1));
   const yAt = (v) => padT + plotH * (1 - v / maxV);
+  // 水平网格线（0/max 之间 3 等分）
+  ctx.strokeStyle = '#ECECEF'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 3; g++) { const y = Math.round(padT + (plotH * g) / 3) + 0.5; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); }
+  // Y 轴刻度
+  if (showYAxis) {
+    ctx.fillStyle = '#8E8E93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(maxV), padL - 5, padT + 0.5);
+    ctx.fillText('0', padL - 5, padT + plotH + 0.5);
+  }
   const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
   grad.addColorStop(0, hexA(color, 0.30)); grad.addColorStop(1, hexA(color, 0.02));
   ctx.beginPath(); ctx.moveTo(xAt(0), yAt(values[0]));
@@ -442,17 +437,38 @@ function drawTrend(ctx, w, h, opt) {
   ctx.beginPath(); ctx.moveTo(xAt(0), yAt(values[0]));
   for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(values[i]));
   ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
-  if (n <= 7) {
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    for (let i = 0; i < n; i++) {
-      ctx.beginPath(); ctx.arc(xAt(i), yAt(values[i]), 3, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
-      if (values[i] > 0) { ctx.fillStyle = '#1C1C1E'; ctx.font = '10px sans-serif'; ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 9); }
-    }
+  // 数值标签：≤7 全标，否则仅标有记录的天
+  const showAll = n <= 7;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < n; i++) {
+    if (!(showAll || values[i] > 0)) continue;
+    ctx.beginPath(); ctx.arc(xAt(i), yAt(values[i]), 2.5, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+    if (values[i] > 0) { ctx.fillStyle = '#1C1C1E'; ctx.font = '10px sans-serif'; ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 8); }
+  }
+  // 选中高亮：参考线 + 大圆点 + 气泡
+  if (opt.tip && opt.tip.index >= 0 && opt.tip.index < n) {
+    const i = opt.tip.index; const px = xAt(i), py = yAt(values[i]);
+    ctx.strokeStyle = hexA(color, 0.4); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, padT); ctx.lineTo(px, padT + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+    const text = opt.tip.label || String(values[i]);
+    ctx.font = '600 12px sans-serif';
+    const tw = ctx.measureText(text).width;
+    const bw = tw + 16, bh = 22;
+    let bx = px - bw / 2; bx = Math.max(padL, Math.min(bx, w - padR - bw));
+    let by = py - bh - 12; if (by < padT - 2) by = py + 12;
+    roundRect(ctx, bx, by, bw, bh, 6); ctx.fillStyle = color; ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + bw / 2, by + bh / 2 + 0.5);
   }
   ctx.fillStyle = '#8E8E93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   const labelStep = n > 14 ? Math.ceil(n / 6) : 1;
   for (let i = 0; i < n; i++) { if (n <= 14 || i % labelStep === 0 || i === n - 1) ctx.fillText(labels[i], xAt(i), h - 6); }
+  const points = [];
+  for (let i = 0; i < n; i++) points.push({ x: xAt(i), y: yAt(values[i]), value: values[i] });
+  return { points, plot: { left: padL, right: w - padR, top: padT, bottom: padT + plotH } };
 }
 function drawRing(ctx, w, h, opt) {
   const segments = (opt.segments || []).filter((s) => s.value > 0);
@@ -481,9 +497,27 @@ function drawCanvas2D(id, fn) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   fn(ctx, w, h);
 }
+function drawTrendCanvas() {
+  const cfg = App._trendCfg; if (!cfg) return;
+  drawCanvas2D('trendCanvas', (ctx, w, h) => {
+    const geo = drawTrend(ctx, w, h, {
+      labels: cfg.labels,
+      values: cfg.values,
+      color: '#34C759',
+      tip: App.trendTipIndex != null ? { index: App.trendTipIndex, label: cfg.tipLabels[App.trendTipIndex] } : null,
+    });
+    App._trendGeo = geo;
+  });
+}
 function renderStatsCharts() {
   const d = App.statsData(App.statsPeriod);
-  drawCanvas2D('trendCanvas', (ctx, w, h) => drawTrend(ctx, w, h, { labels: d.bars.map((b) => b.day), values: d.bars.map((b) => b.count), color: '#34C759' }));
+  App._trendCfg = { labels: d.bars.map((b) => b.day), values: d.bars.map((b) => b.count), tipLabels: d.bars.map((b) => b.tipLabel) };
+  // 默认高亮今天（超出范围则回到 0）
+  if (App.trendTipIndex == null || App.trendTipIndex >= d.bars.length) {
+    const ti = d.bars.findIndex((b) => b.date === todayStr());
+    App.trendTipIndex = ti >= 0 ? ti : 0;
+  }
+  drawTrendCanvas();
   const total = d.dist.reduce((s, b) => s + b.count, 0);
   const dom = d.dist.slice().sort((a, b) => b.count - a.count)[0];
   drawCanvas2D('ringCanvas', (ctx, w, h) => drawRing(ctx, w, h, {
@@ -652,7 +686,25 @@ const App = {
   },
 
   afterRender(page) {
-    if (page === 'stats') { renderStatsCharts(); }
+    if (page === 'stats') {
+      renderStatsCharts();
+      const tc = document.getElementById('trendCanvas');
+      if (tc) {
+        tc.onclick = (e) => {
+          const cfg = App._trendCfg;
+          if (!cfg || !App._trendGeo) return;
+          const rect = tc.getBoundingClientRect();
+          const x = e.clientX - rect.left; // 相对画布
+          let best = 0, bd = 1e9;
+          App._trendGeo.points.forEach((p, i) => {
+            const dd = Math.abs(p.x - x);
+            if (dd < bd) { bd = dd; best = i; }
+          });
+          App.trendTipIndex = best;
+          drawTrendCanvas();
+        };
+      }
+    }
   },
 
   share() {
@@ -847,32 +899,9 @@ const App = {
     const bars = days.map((d) => {
       const c = byDay[d] || 0;
       const dayLabel = isWeek ? WEEK[new Date(d + 'T00:00:00').getDay()] : String(Number(d.slice(8, 10)));
-      return { date: d, day: dayLabel, count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2 };
+      const ctxLabel = isWeek ? ('周' + dayLabel) : d.slice(5);
+      return { date: d, day: dayLabel, count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2, tipLabel: ctxLabel + ' · ' + c + '次' };
     });
-    // 每日时长（选中日详情用）
-    const durByDay = {};
-    list.forEach((r) => { if (r.durationSec > 0) durByDay[r.date] = (durByDay[r.date] || 0) + r.durationSec; });
-
-    // 本月月历网格 + 选中日
-    let monthCells = [];
-    const selDate = isWeek ? '' : (this.selectedMonthDate || todayStr());
-    let selectedDay = null;
-    if (!isWeek) {
-      const now = new Date(); const y = now.getFullYear(), mo = now.getMonth();
-      const dim = new Date(y, mo + 1, 0).getDate();
-      const firstDow = (new Date(y, mo, 1).getDay() + 6) % 7;
-      for (let i = 0; i < firstDow; i++) monthCells.push({ blank: true });
-      for (let dnum = 1; dnum <= dim; dnum++) {
-        const date = fmtDate(new Date(y, mo, dnum));
-        const c = byDay[date] || 0;
-        const intensity = c === 0 ? 0 : c === 1 ? 1 : c === 2 ? 2 : 3;
-        monthCells.push({ blank: false, date, dayNum: dnum, count: c, intensity, isToday: date === todayStr() });
-      }
-      const sc = byDay[selDate] || 0;
-      const sd = durByDay[selDate] || 0;
-      const avgSec = sc ? sd / sc : 0;
-      selectedDay = { date: selDate, dayNum: Number(selDate.slice(8, 10)), dow: WEEK[new Date(selDate + 'T00:00:00').getDay()], count: sc, avgDurText: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—' };
-    }
     const total = list.length;
     const durList = list.filter((r) => r.durationSec > 0);
     const avgSec = durList.length ? durList.reduce((s, r) => s + r.durationSec, 0) / durList.length : 0;
@@ -884,7 +913,7 @@ const App = {
     const symMap = {};
     list.forEach((r) => r.symptomTags.forEach((t) => { symMap[t] = (symMap[t] || 0) + 1; }));
     const symptoms = Object.keys(symMap).map((k) => ({ name: k, count: symMap[k] })).sort((a, b) => b.count - a.count).slice(0, 5);
-    return { total, avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms, monthCells, selectedDate: selDate, selectedDay };
+    return { total, avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms };
   },
   statsPeriod: 'week',
   renderStats() {
@@ -904,17 +933,8 @@ const App = {
       '</div>' +
       '<div class="card flat"><div class="trend-head"><span class="card-title">每日次数</span>' +
         '<span class="trend-tag" onclick="App.push(\'history\')" style="color:#34C759;cursor:pointer">明细 ›</span></div>' +
+        '<div class="trend-hint">轻点折线可查看某一天的次数（默认高亮今天）</div>' +
         '<canvas id="trendCanvas" class="chart-canvas trend"></canvas></div>' +
-      (this.statsPeriod === 'month'
-        ? '<div class="card flat"><div class="card-title">每日明细（点格子看当天）</div>' +
-          '<div class="cal-head">' + WEEK.slice(1).concat('日').map((w) => '<span class="cal-h">' + w + '</span>').join('') + '</div>' +
-          '<div class="cal-grid">' + d.monthCells.map((c) =>
-            c.blank ? '<span class="cal-cell blank"></span>'
-            : '<span class="cal-cell int-' + c.intensity + (c.date === d.selectedDate ? ' sel' : '') + (c.isToday ? ' today' : '') + '" onclick="App.selectMonthDay(\'' + c.date + '\')"><span class="cal-d">' + c.dayNum + '</span><span class="cal-c">' + c.count + '</span></span>'
-          ).join('') + '</div>' +
-          (d.selectedDay ? '<div class="cal-detail"><span class="cd-date">' + d.selectedDay.dayNum + '日 · 周' + d.selectedDay.dow + '</span><span class="cd-num">' + d.selectedDay.count + ' 次</span>' + (d.selectedDay.count ? '<span class="cd-dur">当日平均 ' + d.selectedDay.avgDurText + '</span>' : '') + '</div>' : '')
-          + '</div>'
-        : '') +
       '<div class="card flat"><div class="card-title">Bristol 类型分布</div>' +
         '<div class="ring-wrap"><canvas id="ringCanvas" class="ring-canvas"></canvas>' +
         '<div class="ring-legend">' + legendHtml + '</div></div></div>' +
@@ -923,8 +943,7 @@ const App = {
           ? '<div class="chip-row">' + d.symptoms.map((s) => '<span class="chip">' + s.name + ' ×' + s.count + '</span>').join('') + '</div>'
           : '<div class="empty">本周期暂无症状记录</div>') + '</div>';
   },
-  switchPeriod(p) { if (p === 'month' && !this.selectedMonthDate) this.selectedMonthDate = todayStr(); if (p === 'week') this.selectedMonthDate = ''; this.statsPeriod = p; this.render(); },
-  selectMonthDay(date) { this.selectedMonthDate = date; this.render(); },
+  switchPeriod(p) { this.statsPeriod = p; this.render(); },
 
   /* ================= 广场 ================= */
   renderCommunity() {

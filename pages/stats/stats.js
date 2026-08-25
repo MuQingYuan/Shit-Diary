@@ -3,7 +3,6 @@ const { BRISTOL, BRISTOL_COLORS } = require('../../utils/constants');
 const { drawTrend, drawRing } = require('../../utils/chart');
 
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
-const WEEK_HEAD = ['一', '二', '三', '四', '五', '六', '日']; // 月历表头（周一对齐）
 
 Page({
   data: {
@@ -16,10 +15,6 @@ Page({
     bars: [],
     dist: [],
     symptoms: [],
-    monthCells: [],      // 本月月历网格（含首周占位）
-    selectedDate: '',    // 当前选中日期 YYYY-MM-DD
-    selectedDay: null,   // 选中日详情 {date, dayNum, dow, count, avgDurText}
-    weekHead: WEEK_HEAD, // 月历表头 周一~周日
   },
 
   onLoad() { this.load(); },
@@ -98,9 +93,8 @@ Page({
       if (r.durationSec > 0) durByDay[r.date] = (durByDay[r.date] || 0) + r.durationSec;
     });
 
-    // 趋势图数据点（每日次数）+ 本月月历网格
+    // 趋势图数据点（每日次数）
     const bars = [];
-    let monthCells = [];
     if (isWeek) {
       // 本周：周一到周日，按自然周顺序
       this.currentWeekDays().forEach((d) => {
@@ -132,16 +126,6 @@ Page({
           hot: count >= 3,
         });
       }
-      // 月历网格：周一对齐，首周补空白；绿色深浅表示次数
-      const firstDow = (new Date(y, mo, 1).getDay() + 6) % 7;
-      for (let i = 0; i < firstDow; i++) monthCells.push({ blank: true });
-      const todayS = this.todayStr();
-      for (let dnum = 1; dnum <= daysInMonth; dnum++) {
-        const date = `${y}-${pad(mo + 1)}-${pad(dnum)}`;
-        const count = countByDay[date] || 0;
-        const intensity = count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : 3;
-        monthCells.push({ blank: false, date, dayNum: dnum, count, intensity, isToday: date === todayS });
-      }
     }
 
     // Bristol 分布（带配色）
@@ -164,10 +148,16 @@ Page({
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    // 选中日详情（本月默认选中今天）
-    const selectedDate = isWeek ? '' : this.todayStr();
-    const selectedDay = isWeek ? null : this.buildSelectedDay(selectedDate, countByDay, durByDay);
-    this._month = { countByDay, durByDay };
+    // 折线图点击提示配置：每点文案「周X · N次」或「MM-DD · N次」
+    const tipLabels = bars.map((b) => {
+      const ctxLabel = isWeek ? `周${b.day}` : b.date.slice(5);
+      return `${ctxLabel} · ${b.count}次`;
+    });
+    this._trendCfg = { labels: bars.map((b) => b.day), values: bars.map((b) => b.count), tipLabels };
+    // 默认高亮今天
+    const todayIdx = bars.findIndex((b) => b.date === this.todayStr());
+    this._tipIndex = todayIdx >= 0 ? todayIdx : 0;
+    this._geo = null;
 
     this.setData({
       total,
@@ -177,9 +167,6 @@ Page({
       bars,
       dist,
       symptoms,
-      monthCells,
-      selectedDate,
-      selectedDay,
     }, () => this.drawCharts());
   },
 
@@ -188,37 +175,44 @@ Page({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   },
 
-  // 构造选中日详情（次数 + 当日平均时长）
-  buildSelectedDay(date, countByDay, durByDay) {
-    if (!date) return null;
-    const count = countByDay[date] || 0;
-    const dur = durByDay[date] || 0;
-    const d = new Date(date + 'T00:00:00');
-    const avgSec = count ? dur / count : 0;
-    const avgDurText = avgSec ? Math.round(avgSec / 6) / 10 + ' 分钟' : '—';
-    return { date, dayNum: Number(date.slice(8, 10)), dow: WEEK_LABELS[d.getDay()], count, avgDurText };
-  },
-
-  // 点击月历格子选中某一天
-  selectDay(e) {
-    const date = e.currentTarget.dataset.date;
-    if (!date) return; // 首周占位空白格
-    const m = this._month || { countByDay: {}, durByDay: {} };
-    this.setData({ selectedDate: date, selectedDay: this.buildSelectedDay(date, m.countByDay, m.durByDay) });
+  // 点击折线：根据 x 坐标命中最近的数据点并高亮
+  onTrendTouch(e) {
+    if (!this._geo || !this._geo.points) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    const x = t.x; // canvas 2d：touch 坐标相对画布左上角
+    let best = 0, bd = 1e9;
+    this._geo.points.forEach((p, i) => {
+      const dd = Math.abs(p.x - x);
+      if (dd < bd) { bd = dd; best = i; }
+    });
+    if (best !== this._tipIndex) {
+      this._tipIndex = best;
+      this.drawTrendNow();
+    }
   },
 
   drawCharts() {
-    // 趋势折线图
-    this.drawOnCanvas('trendCanvas', (ctx, w, h) => {
-      const bars = this.data.bars;
-      drawTrend(ctx, w, h, {
-        labels: bars.map((b) => b.day),
-        values: bars.map((b) => b.count),
-        color: '#34C759',
-      });
-    });
+    this.drawTrendNow();
+    this.drawRingNow();
+  },
 
-    // Bristol 环形图
+  drawTrendNow() {
+    const cfg = this._trendCfg;
+    if (!cfg) return;
+    this.drawOnCanvas('trendCanvas', (ctx, w, h) => {
+      const geo = drawTrend(ctx, w, h, {
+        labels: cfg.labels,
+        values: cfg.values,
+        color: '#34C759',
+        tip: this._tipIndex != null ? { index: this._tipIndex, label: cfg.tipLabels[this._tipIndex] } : null,
+      });
+      this._geo = geo;
+    });
+  },
+
+  // Bristol 环形图
+  drawRingNow() {
     this.drawOnCanvas('ringCanvas', (ctx, w, h) => {
       const dist = this.data.dist;
       const total = dist.reduce((s, b) => s + b.count, 0);

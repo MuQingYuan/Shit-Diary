@@ -12,38 +12,72 @@ function hexA(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+// 圆角矩形路径（兼容小程序与浏览器 canvas）
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
 /**
  * 折线 / 面积图（每日次数趋势）
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} w 布局宽(px)
  * @param {number} h 布局高(px)
- * @param {object} opt { labels:string[], values:number[], color:string }
+ * @param {object} opt {
+ *   labels:string[], values:number[], color:string,
+ *   showYAxis?:boolean(默认true),
+ *   tip?:{ index:number, label:string }  // 高亮某点并显示气泡
+ * }
+ * @returns {null | { points:[{x,y,value}], plot:{left,right,top,bottom} }}
+ *   points 供点击命中测试（坐标为布局像素，与 dpr 缩放前的 ctx 一致）。
  */
 function drawTrend(ctx, w, h, opt) {
   const labels = opt.labels || [];
   const values = opt.values || [];
   const color = opt.color || '#34C759';
   const n = values.length;
-  if (!n) return;
+  if (!n) return null;
 
-  const padL = 10, padR = 10, padT = 22, padB = 24;
+  const showYAxis = opt.showYAxis !== false;
+  const padL = showYAxis ? 28 : 10;
+  const padR = 10, padT = 22, padB = 24;
   const plotW = w - padL - padR;
   const plotH = h - padT - padB;
-  const maxV = Math.max(opt.maxY || 0, ...values, 1);
 
-  // 水平网格线（3 条）
+  // 整数上限，保证 Y 轴有可读刻度
+  let maxV = Math.max(opt.maxY || 0, ...values, 1);
+  maxV = Math.ceil(maxV);
+  if (maxV < 1) maxV = 1;
+
+  const xAt = (i) => (n === 1 ? padL + plotW / 2 : padL + (plotW * i) / (n - 1));
+  const yAt = (v) => padT + plotH * (1 - v / maxV);
+
+  // 水平网格线（0 / max 之间 3 等分，共 4 条）
   ctx.strokeStyle = '#ECECEF';
   ctx.lineWidth = 1;
-  for (let g = 0; g <= 2; g++) {
-    const y = Math.round(padT + (plotH * g) / 2) + 0.5;
+  for (let g = 0; g <= 3; g++) {
+    const y = Math.round(padT + (plotH * g) / 3) + 0.5;
     ctx.beginPath();
     ctx.moveTo(padL, y);
     ctx.lineTo(w - padR, y);
     ctx.stroke();
   }
 
-  const xAt = (i) => (n === 1 ? padL + plotW / 2 : padL + (plotW * i) / (n - 1));
-  const yAt = (v) => padT + plotH * (1 - v / maxV);
+  // Y 轴刻度（顶部 = 上限，底部 = 0）
+  if (showYAxis) {
+    ctx.fillStyle = '#8E8E93';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(maxV), padL - 5, padT + 0.5);
+    ctx.fillText('0', padL - 5, padT + plotH + 0.5);
+  }
 
   // 面积填充
   const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
@@ -68,24 +102,58 @@ function drawTrend(ctx, w, h, opt) {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // 数据点 + 数值（点数较少时标注）
-  if (n <= 7) {
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    for (let i = 0; i < n; i++) {
-      ctx.beginPath();
-      ctx.arc(xAt(i), yAt(values[i]), 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = color;
-      ctx.stroke();
-      if (values[i] > 0) {
-        ctx.fillStyle = '#1C1C1E';
-        ctx.font = '10px sans-serif';
-        ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 9);
-      }
+  // 数值标签：点数少（≤7）全标；点多时仅标有记录的天，避免拥挤
+  const showAll = n <= 7;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  for (let i = 0; i < n; i++) {
+    if (!(showAll || values[i] > 0)) continue;
+    ctx.beginPath();
+    ctx.arc(xAt(i), yAt(values[i]), 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+    if (values[i] > 0) {
+      ctx.fillStyle = '#1C1C1E';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 8);
     }
+  }
+
+  // 选中/高亮提示：竖直参考线 + 大圆点 + 气泡
+  if (opt.tip && opt.tip.index >= 0 && opt.tip.index < n) {
+    const i = opt.tip.index;
+    const px = xAt(i), py = yAt(values[i]);
+    ctx.strokeStyle = hexA(color, 0.4);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, padT);
+    ctx.lineTo(px, padT + plotH);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#fff';
+    ctx.stroke();
+    const text = opt.tip.label || String(values[i]);
+    ctx.font = '600 12px sans-serif';
+    const tw = ctx.measureText(text).width;
+    const bw = tw + 16, bh = 22;
+    let bx = px - bw / 2;
+    bx = Math.max(padL, Math.min(bx, w - padR - bw));
+    let by = py - bh - 12;
+    if (by < padT - 2) by = py + 12;
+    roundRect(ctx, bx, by, bw, bh, 6);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, bx + bw / 2, by + bh / 2 + 0.5);
   }
 
   // X 轴标签
@@ -99,6 +167,10 @@ function drawTrend(ctx, w, h, opt) {
       ctx.fillText(labels[i], xAt(i), h - 6);
     }
   }
+
+  const points = [];
+  for (let i = 0; i < n; i++) points.push({ x: xAt(i), y: yAt(values[i]), value: values[i] });
+  return { points, plot: { left: padL, right: w - padR, top: padT, bottom: padT + plotH } };
 }
 
 /**
