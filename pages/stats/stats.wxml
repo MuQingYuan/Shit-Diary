@@ -31,6 +31,31 @@
     <canvas type="2d" id="trendCanvas" class="trend-canvas"></canvas>
   </view>
 
+  <!-- 本月：月历网格 + 选中日详情 -->
+  <view class="card" wx:if="{{period === 'month'}}">
+    <view class="card-head">
+      <text class="card-title">每日明细（点格子看当天）</text>
+    </view>
+    <view class="cal-head">
+      <text class="cal-h" wx:for="{{weekHead}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view class="cal-grid">
+      <view wx:for="{{monthCells}}" wx:key="index"
+            class="cal-cell {{item.blank ? 'blank' : ''}} {{item.date === selectedDate ? 'sel' : ''}} {{item.isToday ? 'today' : ''}} int-{{item.intensity}}"
+            data-date="{{item.date}}" bindtap="selectDay">
+        <block wx:if="{{!item.blank}}">
+          <text class="cal-d">{{item.dayNum}}</text>
+          <text class="cal-c">{{item.count}}</text>
+        </block>
+      </view>
+    </view>
+    <view class="cal-detail" wx:if="{{selectedDay}}">
+      <text class="cd-date">{{selectedDay.dayNum}}日 · 周{{selectedDay.dow}}</text>
+      <text class="cd-num">{{selectedDay.count}} 次</text>
+      <text class="cd-dur" wx:if="{{selectedDay.count}}">当日平均 {{selectedDay.avgDurText}}</text>
+    </view>
+  </view>
+
   <view class="card">
     <text class="card-title">Bristol 类型分布</text>
     <view class="ring-wrap">

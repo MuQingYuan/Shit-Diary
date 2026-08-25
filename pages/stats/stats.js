@@ -3,6 +3,7 @@ const { BRISTOL, BRISTOL_COLORS } = require('../../utils/constants');
 const { drawTrend, drawRing } = require('../../utils/chart');
 
 const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+const WEEK_HEAD = ['一', '二', '三', '四', '五', '六', '日']; // 月历表头（周一对齐）
 
 Page({
   data: {
@@ -15,6 +16,10 @@ Page({
     bars: [],
     dist: [],
     symptoms: [],
+    monthCells: [],      // 本月月历网格（含首周占位）
+    selectedDate: '',    // 当前选中日期 YYYY-MM-DD
+    selectedDay: null,   // 选中日详情 {date, dayNum, dow, count, avgDurText}
+    weekHead: WEEK_HEAD, // 月历表头 周一~周日
   },
 
   onLoad() { this.load(); },
@@ -85,10 +90,17 @@ Page({
     const avgSec = durList.length ? durList.reduce((s, r) => s + r.durationSec, 0) / durList.length : 0;
     const ideal = list.filter((r) => Number(r.bristolType) === 4).length;
 
-    // 每日次数
+    // 每日次数 / 时长
     const countByDay = {};
-    list.forEach((r) => { countByDay[r.date] = (countByDay[r.date] || 0) + 1; });
+    const durByDay = {};
+    list.forEach((r) => {
+      countByDay[r.date] = (countByDay[r.date] || 0) + 1;
+      if (r.durationSec > 0) durByDay[r.date] = (durByDay[r.date] || 0) + r.durationSec;
+    });
+
+    // 趋势图数据点（每日次数）+ 本月月历网格
     const bars = [];
+    let monthCells = [];
     if (isWeek) {
       // 本周：周一到周日，按自然周顺序
       this.currentWeekDays().forEach((d) => {
@@ -114,11 +126,21 @@ Page({
         const count = countByDay[date] || 0;
         bars.push({
           date,
-          day: WEEK_LABELS[d.getDay()],
+          day: String(dnum),
           count,
           h: Math.max(16, Math.min(180, count * 52)),
           hot: count >= 3,
         });
+      }
+      // 月历网格：周一对齐，首周补空白；绿色深浅表示次数
+      const firstDow = (new Date(y, mo, 1).getDay() + 6) % 7;
+      for (let i = 0; i < firstDow; i++) monthCells.push({ blank: true });
+      const todayS = this.todayStr();
+      for (let dnum = 1; dnum <= daysInMonth; dnum++) {
+        const date = `${y}-${pad(mo + 1)}-${pad(dnum)}`;
+        const count = countByDay[date] || 0;
+        const intensity = count === 0 ? 0 : count === 1 ? 1 : count === 2 ? 2 : 3;
+        monthCells.push({ blank: false, date, dayNum: dnum, count, intensity, isToday: date === todayS });
       }
     }
 
@@ -142,6 +164,11 @@ Page({
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
+    // 选中日详情（本月默认选中今天）
+    const selectedDate = isWeek ? '' : this.todayStr();
+    const selectedDay = isWeek ? null : this.buildSelectedDay(selectedDate, countByDay, durByDay);
+    this._month = { countByDay, durByDay };
+
     this.setData({
       total,
       avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1),
@@ -150,7 +177,34 @@ Page({
       bars,
       dist,
       symptoms,
+      monthCells,
+      selectedDate,
+      selectedDay,
     }, () => this.drawCharts());
+  },
+
+  todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  },
+
+  // 构造选中日详情（次数 + 当日平均时长）
+  buildSelectedDay(date, countByDay, durByDay) {
+    if (!date) return null;
+    const count = countByDay[date] || 0;
+    const dur = durByDay[date] || 0;
+    const d = new Date(date + 'T00:00:00');
+    const avgSec = count ? dur / count : 0;
+    const avgDurText = avgSec ? Math.round(avgSec / 6) / 10 + ' 分钟' : '—';
+    return { date, dayNum: Number(date.slice(8, 10)), dow: WEEK_LABELS[d.getDay()], count, avgDurText };
+  },
+
+  // 点击月历格子选中某一天
+  selectDay(e) {
+    const date = e.currentTarget.dataset.date;
+    if (!date) return; // 首周占位空白格
+    const m = this._month || { countByDay: {}, durByDay: {} };
+    this.setData({ selectedDate: date, selectedDay: this.buildSelectedDay(date, m.countByDay, m.durByDay) });
   },
 
   drawCharts() {

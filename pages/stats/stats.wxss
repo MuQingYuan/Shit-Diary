@@ -113,3 +113,69 @@
   border-radius: 28rpx;
 }
 .empty { font-size: 24rpx; color: #8E8E93; text-align: center; padding: 32rpx 0; }
+
+/* ===== 本月月历网格 ===== */
+.cal-head {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+.cal-h {
+  flex: 1;
+  text-align: center;
+  font-size: 22rpx;
+  color: #8E8E93;
+}
+.cal-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+.cal-cell {
+  width: 14.28%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 0;
+  border-radius: 16rpx;
+  margin-bottom: 8rpx;
+}
+.cal-cell.blank { visibility: hidden; }
+.cal-d {
+  font-size: 24rpx;
+  color: #1C1C1E;
+  line-height: 1.2;
+}
+.cal-c {
+  font-size: 22rpx;
+  font-weight: 600;
+  margin-top: 4rpx;
+}
+/* 次数深浅（0 灰 / 1 浅绿 / 2 中绿 / 3 深绿） */
+.int-0 { background: #F2F2F7; }
+.int-0 .cal-c { color: #C7C7CC; }
+.int-1 { background: #E3F5E8; }
+.int-1 .cal-c { color: #34C759; }
+.int-2 { background: #B9E8C6; }
+.int-2 .cal-c { color: #1F8F45; }
+.int-3 { background: #34C759; }
+.int-3 .cal-d, .int-3 .cal-c { color: #fff; }
+/* 今天描边 */
+.cal-cell.today { outline: 2rpx solid #34C759; outline-offset: -2rpx; }
+/* 选中高亮 */
+.cal-cell.sel { box-shadow: 0 0 0 4rpx rgba(52, 199, 89, 0.4); }
+.cal-cell.sel .cal-c { color: #1F8F45; }
+.cal-cell.sel.int-3 .cal-c { color: #fff; }
+
+/* 选中日详情条 */
+.cal-detail {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #EFEFF4;
+}
+.cd-date { font-size: 26rpx; color: #8E8E93; }
+.cd-num { font-size: 34rpx; font-weight: 600; color: #34C759; }
+.cd-dur { font-size: 24rpx; color: #8E8E93; }

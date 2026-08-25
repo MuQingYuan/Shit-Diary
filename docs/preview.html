@@ -130,6 +130,32 @@
   .legend-pct { width: 42px; text-align: right; font-size: 12px; color: #8E8E93; flex-shrink: 0; }
   .empty { text-align: center; color: #8E8E93; font-size: 12px; padding: 26px 0; }
 
+  /* ===== 本月月历网格 ===== */
+  .cal-head { display: flex; margin: 6px 0; }
+  .cal-h { flex: 1; text-align: center; font-size: 11px; color: #8E8E93; }
+  .cal-grid { display: flex; flex-wrap: wrap; }
+  .cal-cell {
+    width: 14.28%; box-sizing: border-box;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 7px 0; border-radius: 9px; margin-bottom: 5px; cursor: pointer;
+    user-select: none;
+  }
+  .cal-cell.blank { visibility: hidden; cursor: default; }
+  .cal-d { font-size: 12px; color: #1C1C1E; line-height: 1.2; }
+  .cal-c { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .int-0 { background: #F2F2F7; } .int-0 .cal-c { color: #C7C7CC; }
+  .int-1 { background: #E3F5E8; } .int-1 .cal-c { color: #34C759; }
+  .int-2 { background: #B9E8C6; } .int-2 .cal-c { color: #1F8F45; }
+  .int-3 { background: #34C759; } .int-3 .cal-d, .int-3 .cal-c { color: #fff; }
+  .cal-cell.today { outline: 1.5px solid #34C759; outline-offset: -1.5px; }
+  .cal-cell.sel { box-shadow: 0 0 0 3px rgba(52,199,89,0.4); }
+  .cal-cell.sel .cal-c { color: #1F8F45; }
+  .cal-cell.sel.int-3 .cal-c { color: #fff; }
+  .cal-detail { display: flex; align-items: baseline; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #EFEFF4; }
+  .cd-date { font-size: 13px; color: #8E8E93; }
+  .cd-num { font-size: 17px; font-weight: 600; color: #34C759; }
+  .cd-dur { font-size: 12px; color: #8E8E93; }
+
   .remind { display: flex; justify-content: space-between; align-items: center; }
   .remind-main { flex: 1; }
   .remind-sub { font-size: 12px; color: #8E8E93; margin-top: 4px; }
@@ -820,8 +846,33 @@ const App = {
     list.forEach((r) => { byDay[r.date] = (byDay[r.date] || 0) + 1; });
     const bars = days.map((d) => {
       const c = byDay[d] || 0;
-      return { date: d, day: WEEK[new Date(d + 'T00:00:00').getDay()], count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2 };
+      const dayLabel = isWeek ? WEEK[new Date(d + 'T00:00:00').getDay()] : String(Number(d.slice(8, 10)));
+      return { date: d, day: dayLabel, count: c, h: Math.max(8, Math.min(80, c * 34)), hot: c >= 2 };
     });
+    // 每日时长（选中日详情用）
+    const durByDay = {};
+    list.forEach((r) => { if (r.durationSec > 0) durByDay[r.date] = (durByDay[r.date] || 0) + r.durationSec; });
+
+    // 本月月历网格 + 选中日
+    let monthCells = [];
+    const selDate = isWeek ? '' : (this.selectedMonthDate || todayStr());
+    let selectedDay = null;
+    if (!isWeek) {
+      const now = new Date(); const y = now.getFullYear(), mo = now.getMonth();
+      const dim = new Date(y, mo + 1, 0).getDate();
+      const firstDow = (new Date(y, mo, 1).getDay() + 6) % 7;
+      for (let i = 0; i < firstDow; i++) monthCells.push({ blank: true });
+      for (let dnum = 1; dnum <= dim; dnum++) {
+        const date = fmtDate(new Date(y, mo, dnum));
+        const c = byDay[date] || 0;
+        const intensity = c === 0 ? 0 : c === 1 ? 1 : c === 2 ? 2 : 3;
+        monthCells.push({ blank: false, date, dayNum: dnum, count: c, intensity, isToday: date === todayStr() });
+      }
+      const sc = byDay[selDate] || 0;
+      const sd = durByDay[selDate] || 0;
+      const avgSec = sc ? sd / sc : 0;
+      selectedDay = { date: selDate, dayNum: Number(selDate.slice(8, 10)), dow: WEEK[new Date(selDate + 'T00:00:00').getDay()], count: sc, avgDurText: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—' };
+    }
     const total = list.length;
     const durList = list.filter((r) => r.durationSec > 0);
     const avgSec = durList.length ? durList.reduce((s, r) => s + r.durationSec, 0) / durList.length : 0;
@@ -833,7 +884,7 @@ const App = {
     const symMap = {};
     list.forEach((r) => r.symptomTags.forEach((t) => { symMap[t] = (symMap[t] || 0) + 1; }));
     const symptoms = Object.keys(symMap).map((k) => ({ name: k, count: symMap[k] })).sort((a, b) => b.count - a.count).slice(0, 5);
-    return { total, avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms };
+    return { total, avgPerDay: (total / (isWeek ? 7 : new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate())).toFixed(1), avgDur: avgSec ? (avgSec / 60).toFixed(1) + ' 分钟' : '—', idealPct: total ? Math.round(ideal / total * 100) + '%' : '0%', bars, dist, symptoms, monthCells, selectedDate: selDate, selectedDay };
   },
   statsPeriod: 'week',
   renderStats() {
@@ -854,6 +905,16 @@ const App = {
       '<div class="card flat"><div class="trend-head"><span class="card-title">每日次数</span>' +
         '<span class="trend-tag" onclick="App.push(\'history\')" style="color:#34C759;cursor:pointer">明细 ›</span></div>' +
         '<canvas id="trendCanvas" class="chart-canvas trend"></canvas></div>' +
+      (this.statsPeriod === 'month'
+        ? '<div class="card flat"><div class="card-title">每日明细（点格子看当天）</div>' +
+          '<div class="cal-head">' + WEEK.slice(1).concat('日').map((w) => '<span class="cal-h">' + w + '</span>').join('') + '</div>' +
+          '<div class="cal-grid">' + d.monthCells.map((c) =>
+            c.blank ? '<span class="cal-cell blank"></span>'
+            : '<span class="cal-cell int-' + c.intensity + (c.date === d.selectedDate ? ' sel' : '') + (c.isToday ? ' today' : '') + '" onclick="App.selectMonthDay(\'' + c.date + '\')"><span class="cal-d">' + c.dayNum + '</span><span class="cal-c">' + c.count + '</span></span>'
+          ).join('') + '</div>' +
+          (d.selectedDay ? '<div class="cal-detail"><span class="cd-date">' + d.selectedDay.dayNum + '日 · 周' + d.selectedDay.dow + '</span><span class="cd-num">' + d.selectedDay.count + ' 次</span>' + (d.selectedDay.count ? '<span class="cd-dur">当日平均 ' + d.selectedDay.avgDurText + '</span>' : '') + '</div>' : '')
+          + '</div>'
+        : '') +
       '<div class="card flat"><div class="card-title">Bristol 类型分布</div>' +
         '<div class="ring-wrap"><canvas id="ringCanvas" class="ring-canvas"></canvas>' +
         '<div class="ring-legend">' + legendHtml + '</div></div></div>' +
@@ -862,7 +923,8 @@ const App = {
           ? '<div class="chip-row">' + d.symptoms.map((s) => '<span class="chip">' + s.name + ' ×' + s.count + '</span>').join('') + '</div>'
           : '<div class="empty">本周期暂无症状记录</div>') + '</div>';
   },
-  switchPeriod(p) { this.statsPeriod = p; this.render(); },
+  switchPeriod(p) { if (p === 'month' && !this.selectedMonthDate) this.selectedMonthDate = todayStr(); if (p === 'week') this.selectedMonthDate = ''; this.statsPeriod = p; this.render(); },
+  selectMonthDay(date) { this.selectedMonthDate = date; this.render(); },
 
   /* ================= 广场 ================= */
   renderCommunity() {
