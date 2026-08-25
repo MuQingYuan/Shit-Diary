@@ -250,6 +250,43 @@
   .tab .ic { font-size: 20px; line-height: 1; }
   .tab.active { color: #34C759; font-weight: 600; }
 
+  /* 半屏快捷面板 */
+  .quick-mask {
+    position: absolute; inset: 0; background: rgba(0,0,0,.45);
+    display: none; align-items: flex-end; z-index: 40;
+  }
+  .quick-mask.show { display: flex; }
+  .quick-panel {
+    width: 100%; background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px calc(18px + env(safe-area-inset-bottom));
+    animation: qpUp .25s ease;
+  }
+  @keyframes qpUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .qp-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 12px; }
+  .qp-label { font-size: 13px; font-weight: 600; margin: 12px 0 8px; }
+  .qp-dur { color: #34C759; font-weight: 700; margin-left: 6px; }
+  .qp-bristol { display: flex; justify-content: space-between; }
+  .bristol-mini {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: #fff; border: 2px solid #E5E5EA;
+    color: #34C759; font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s;
+  }
+  .bristol-mini.active { border-color: #34C759; background: #EAF6EC; }
+  .qp-slider { width: 100%; margin: 6px 0; }
+  .qp-presets { display: flex; gap: 8px; }
+  .preset {
+    flex: 1; padding: 9px 0; border-radius: 10px;
+    background: #F0F0F3; color: #555; font-size: 12px; border: none; cursor: pointer; transition: all .15s;
+  }
+  .preset.on { background: #EAF6EC; color: #2E9E4F; font-weight: 600; }
+  .qp-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .qp-btn { flex: 1; padding: 12px 0; border-radius: 12px; font-size: 14px; border: none; cursor: pointer; }
+  .qp-cancel { background: #F0F0F3; color: #555; }
+  .qp-confirm { background: #34C759; color: #fff; font-weight: 600; }
+  .qp-confirm:active, .qp-cancel:active { opacity: .85; }
+
   /* toast / modal */
   #toast {
     position: absolute; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
@@ -285,6 +322,24 @@
   <div class="tabbar" id="tabbar"></div>
   <div id="toast"></div>
   <div id="modal"></div>
+  <div class="quick-mask" id="quickMask" onclick="App.closeQuick()">
+    <div class="quick-panel" onclick="event.stopPropagation()">
+      <div class="qp-title">快捷记录</div>
+      <div class="qp-label">Bristol 类型</div>
+      <div class="qp-bristol" id="quickBristol"></div>
+      <div class="qp-label">时长 <span class="qp-dur" id="quickDur">5 分钟</span></div>
+      <input class="qp-slider" type="range" min="30" max="1800" step="30" value="300" oninput="App.quickDuration(+this.value)">
+      <div class="qp-presets">
+        <button class="preset" data-s="120" onclick="App.quickPreset(120)">2 分钟</button>
+        <button class="preset" data-s="300" onclick="App.quickPreset(300)">5 分钟</button>
+        <button class="preset" data-s="600" onclick="App.quickPreset(600)">10 分钟</button>
+      </div>
+      <div class="qp-actions">
+        <button class="qp-btn qp-cancel" onclick="App.closeQuick()">取消</button>
+        <button class="qp-btn qp-confirm" onclick="App.confirmQuick()">确认记录</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -507,7 +562,7 @@ const App = {
         '<div class="hero-icon ' + (recorded ? 'done' : '') + '">' + (recorded ? '✓' : '💩') + '</div>' +
         '<div class="hero-title">' + (recorded ? '今日已记录 ' + d.todayCount + ' 次' : '今天还未记录') + '</div>' +
         '<div class="hero-sub">' + (recorded ? '规律打卡，从每一天开始' : '点一下，3 秒完成记录') + '</div>' +
-        '<button class="btn-primary" onclick="App.quickRecord()">' + (recorded ? '再记一次' : '立即记录') + '</button>' +
+        '<button class="btn-primary" onclick="App.openQuick()">' + (recorded ? '再记一次' : '立即记录') + '</button>' +
         '<button class="link-btn" onclick="App.go(\'record\')">需要详细记录？去记录页 ›</button>' +
       '</div>' +
       '<div class="stat-row">' +
@@ -533,15 +588,54 @@ const App = {
       '</div>';
   },
 
-  quickRecord() {
+  // ===== 半屏快捷记录面板 =====
+  quickForm: { bristolType: 4, durationSec: 300 },
+
+  openQuick() {
+    document.getElementById('quickMask').classList.add('show');
+    this.renderQuickBristol();
+    document.getElementById('quickDur').textContent = this.quickDurText(this.quickForm.durationSec);
+    document.querySelector('#quickMask .qp-slider').value = this.quickForm.durationSec;
+  },
+  closeQuick() {
+    document.getElementById('quickMask').classList.remove('show');
+  },
+  quickDurText(sec) { return sec < 60 ? sec + '秒' : Math.round(sec / 60) + '分钟'; },
+  renderQuickBristol() {
+    const el = document.getElementById('quickBristol');
+    el.innerHTML = BRISTOL.map((b) =>
+      '<div class="bristol-mini ' + (this.quickForm.bristolType === b.type ? 'active' : '') + '" ' +
+      'onclick="App.quickPickBristol(' + b.type + ')">' + b.type + '</div>').join('');
+  },
+  quickPickBristol(type) {
+    this.quickForm.bristolType = type;
+    this.renderQuickBristol();
+  },
+  quickDuration(sec) {
+    this.quickForm.durationSec = sec;
+    document.getElementById('quickDur').textContent = this.quickDurText(sec);
+    document.querySelectorAll('#quickMask .preset').forEach((p) =>
+      p.classList.toggle('on', +p.dataset.s === sec));
+  },
+  quickPreset(sec) {
+    this.quickForm.durationSec = sec;
+    document.getElementById('quickDur').textContent = this.quickDurText(sec);
+    document.querySelector('#quickMask .qp-slider').value = sec;
+    document.querySelectorAll('#quickMask .preset').forEach((p) =>
+      p.classList.toggle('on', +p.dataset.s === sec));
+  },
+
+  confirmQuick() {
     const now = new Date();
     DB.records.push({
       id: 'q' + Date.now(), date: fmtDate(now), time: fmtHM(now), timestamp: now.getTime(),
-      bristolType: 4, durationSec: 300, color: '', amount: '中', symptomTags: [], mood: '正常', note: ''
+      bristolType: this.quickForm.bristolType, durationSec: this.quickForm.durationSec,
+      color: '', amount: '中', symptomTags: [], mood: '正常', note: ''
     });
     DB.users.totalRecords = DB.records.length;
     DB.users.streakDays = calcStreak();
     saveDB();
+    this.closeQuick();
     toast('已记录 💩');
     this.render();
   },

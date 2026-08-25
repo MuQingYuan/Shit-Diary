@@ -21,6 +21,11 @@ Page({
     remindOn: true,
     remindTime: '08:00',
     submitting: false,
+    // 半屏快捷面板
+    showQuick: false,
+    bristolTypes: [1, 2, 3, 4, 5, 6, 7],
+    quickForm: { bristolType: 4, durationSec: 300 },
+    quickDurText: '5 分钟',
   },
 
   onLoad() {
@@ -68,20 +73,64 @@ Page({
       });
   },
 
-  // 一键快捷记录
-  onQuickRecord() {
+  // ===== 半屏快捷记录面板 =====
+  durText(sec) {
+    if (sec < 60) return sec + '秒';
+    return Math.round(sec / 60) + '分钟';
+  },
+
+  openQuick() {
+    const f = this.data.quickForm;
+    this.setData({
+      showQuick: true,
+      quickDurText: this.durText(f.durationSec),
+    });
+  },
+
+  closeQuick() {
+    if (this.data.submitting) return;
+    this.setData({ showQuick: false });
+  },
+  noop() {},
+
+  quickPickBristol(e) {
+    const type = Number(e.currentTarget.dataset.type);
+    if (type === this.data.quickForm.bristolType) return;
+    this.setData({ 'quickForm.bristolType': type });
+  },
+
+  quickSetDuration(e) {
+    const sec = e.detail.value;
+    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec) });
+  },
+
+  quickPreset(e) {
+    const sec = Number(e.currentTarget.dataset.sec);
+    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec) });
+  },
+
+  // 面板确认 → 提交云函数
+  confirmQuick() {
     if (this.data.submitting) return;
     this.setData({ submitting: true });
     wx.showLoading({ title: '记录中', mask: true });
     const now = new Date();
     const date = fmtDate(now);
     const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    call('addRecord', { date, time, durationSec: 300, bristolType: 4, symptomTags: [], note: '' })
+    call('addRecord', {
+      date,
+      time,
+      durationSec: this.data.quickForm.durationSec,
+      bristolType: this.data.quickForm.bristolType,
+      symptomTags: [],
+      note: '',
+    })
       .then(() => {
         wx.hideLoading();
         wx.showToast({ title: '已记录', icon: 'success' });
         if (wx.vibrateShort) wx.vibrateShort({ type: 'light' });
         wx.setStorageSync('recorded_' + date, true);
+        this.setData({ showQuick: false });
         return this.loadHome(false);
       })
       .catch((err) => {

@@ -188,3 +188,75 @@
 .about-link { display: block; margin-top: 16rpx; font-size: 26rpx; color: #34C759; font-weight: 500; }
 
 .safe-bottom { height: env(safe-area-inset-bottom); }
+
+/* ===== 半屏快捷记录面板 ===== */
+.quick-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  animation: qmFade 0.2s ease;
+}
+@keyframes qmFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.quick-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 36rpx 36rpx 0 0;
+  padding: 16rpx 40rpx calc(36rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  animation: qpUp 0.28s ease;
+}
+@keyframes qpUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.qp-handle {
+  width: 72rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: #D1D1D6;
+  margin: 0 auto 24rpx;
+}
+.qp-title { font-size: 34rpx; font-weight: 600; text-align: center; }
+.qp-label { font-size: 26rpx; font-weight: 500; margin: 28rpx 0 16rpx; }
+.qp-dur { color: #34C759; font-weight: 600; margin-left: 8rpx; }
+.qp-bristol { display: flex; justify-content: space-between; }
+.bristol-mini {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background: #fff;
+  border: 2rpx solid #E5E5EA;
+  color: #34C759;
+  font-size: 34rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.bristol-mini.active { border-color: #34C759; background: #EAF6EC; }
+.qp-slider { margin: 0 8rpx; }
+.qp-presets { display: flex; gap: 20rpx; }
+.preset {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  border-radius: 20rpx;
+  background: #F0F0F3;
+  color: #555;
+  font-size: 26rpx;
+  transition: all 0.15s;
+}
+.preset.on { background: #EAF6EC; color: #2E9E4F; font-weight: 600; }
+.qp-actions { display: flex; gap: 24rpx; margin-top: 40rpx; }
+.qp-btn { flex: 1; font-size: 30rpx; border-radius: 26rpx; line-height: 2.6; border: none; }
+.qp-btn::after { border: none; }
+.qp-cancel { background: #F0F0F3; color: #555; }
+.qp-confirm { background: #34C759; color: #fff; font-weight: 500; }
+.qp-confirm.disabled { opacity: 0.6; }
