@@ -29,14 +29,14 @@
 poop-diary-miniprogram/
 ├── app.js / app.json / app.wxss          # 全局配置
 ├── pages/
-│   ├── index/                            # iOS 风格首页
+│   ├── index/                            # iOS 风格首页（完整交互）
 │   ├── record/                           # 记录表单
-│   ├── history/                          # 历史明细
-│   ├── stats/                            # 统计可视化
-│   ├── remind/                           # 提醒设置
-│   ├── community/                        # 广场
-│   ├── profile/                          # 我的
-│   └── guide/                            # 新手引导
+│   ├── history/                          # 历史明细（筛选/删除）
+│   ├── stats/                            # 统计可视化（周/月切换）
+│   ├── remind/                           # 提醒设置（订阅消息）
+│   ├── community/                        # 广场（分享/排行榜预告）
+│   ├── profile/                          # 我的（资料/菜单）
+│   └── guide/                            # 新手引导（Bristol/FAQ）
 ├── subpackages/                          # 分包（社区/工具）
 ├── components/                           # 自定义组件
 ├── cloudfunctions/

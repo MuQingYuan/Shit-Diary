@@ -1,0 +1,30 @@
+<view class="page">
+  <view class="card report">
+    <view class="report-icon">🎉</view>
+    <text class="report-title">本周打卡 {{weekTotal}} 次</text>
+    <text class="report-sub">连续 {{streak}} 天 · 肠道规律看得见</text>
+    <button class="btn-share" open-type="share" hover-class="hv">把战绩分享给好友</button>
+  </view>
+
+  <view class="card card-tap" bindtap="comingSoon" hover-class="hv">
+    <text class="card-title">🏆 好友打卡排行榜</text>
+    <text class="card-sub">和朋友一起比拼连续打卡天数</text>
+    <text class="arrow">›</text>
+  </view>
+
+  <view class="card card-tap" bindtap="comingSoon" hover-class="hv">
+    <text class="card-title">🌱 肠道知识科普</text>
+    <text class="card-sub">便秘、腹泻、饮食调理实用指南</text>
+    <text class="arrow">›</text>
+  </view>
+
+  <view class="card card-tap" bindtap="comingSoon" hover-class="hv">
+    <text class="card-title">🧪 趣味肠道测试</text>
+    <text class="card-sub">测测你的肠道年龄与健康指数</text>
+    <text class="arrow">›</text>
+  </view>
+
+  <view class="card cta" bindtap="goRecord" hover-class="hv">
+    <text class="cta-text">还没有记录？现在开始你的第一条 ›</text>
+  </view>
+</view>

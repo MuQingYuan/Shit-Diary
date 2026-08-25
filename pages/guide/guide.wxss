@@ -1,0 +1,87 @@
+.page {
+  min-height: 100vh;
+  background: #F2F2F7;
+  padding: 24rpx 32rpx 40rpx;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  color: #1C1C1E;
+}
+
+.hv { opacity: 0.6; }
+
+.hero-card {
+  background: #34C759;
+  border-radius: 32rpx;
+  padding: 48rpx 36rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-title { color: #fff; font-size: 38rpx; font-weight: 600; text-align: center; }
+.hero-sub { color: rgba(255, 255, 255, 0.85); font-size: 24rpx; margin-top: 12rpx; text-align: center; }
+.btn-go {
+  margin-top: 28rpx;
+  background: #fff;
+  color: #34C759;
+  font-size: 28rpx;
+  font-weight: 600;
+  border-radius: 24rpx;
+  width: 60%;
+  border: none;
+}
+.btn-go::after { border: none; }
+
+.card {
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+}
+.card-title { font-size: 30rpx; font-weight: 600; margin-bottom: 20rpx; }
+
+.bristol-item {
+  display: flex;
+  align-items: center;
+  padding: 22rpx 0;
+  border-bottom: 0.5px solid rgba(60, 60, 67, 0.06);
+}
+.bristol-item:last-child { border-bottom: none; }
+.bristol-item.on { background: #F4FBF5; margin: 0 -12rpx; padding-left: 12rpx; padding-right: 12rpx; border-radius: 16rpx; }
+.b-badge {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #EAF6EC;
+  color: #2E9E4F;
+  font-size: 30rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.b-info { flex: 1; margin-left: 20rpx; }
+.b-name { display: block; font-size: 28rpx; font-weight: 500; }
+.b-desc { display: block; font-size: 22rpx; color: #8E8E93; margin-top: 6rpx; line-height: 1.5; }
+.b-arrow { color: #C7C7CC; font-size: 32rpx; }
+
+.faq-item { padding: 22rpx 0; border-bottom: 0.5px solid rgba(60, 60, 67, 0.06); }
+.faq-item:last-child { border-bottom: none; }
+.faq-q { display: flex; justify-content: space-between; align-items: center; font-size: 28rpx; font-weight: 500; }
+.faq-arrow { color: #C7C7CC; font-size: 26rpx; }
+.faq-a {
+  display: block;
+  font-size: 24rpx;
+  color: #8E8E93;
+  line-height: 1.7;
+  margin-top: 14rpx;
+}
+
+.disclaimer {
+  font-size: 22rpx;
+  color: #B25E09;
+  text-align: center;
+  line-height: 1.6;
+  padding: 10rpx 20rpx;
+}

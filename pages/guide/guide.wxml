@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="hero-card">
+    <text class="hero-title">看懂你的每一次「嗯嗯」</text>
+    <text class="hero-sub">3 分钟学会用 Bristol 分型读懂肠道信号</text>
+    <button class="btn-go" hover-class="hv" bindtap="goRecord">去记录一次</button>
+  </view>
+
+  <view class="card">
+    <text class="card-title">Bristol 大便分型（1-7）</text>
+    <view class="bristol-list">
+      <view class="bristol-item {{activeType === item.type ? 'on' : ''}}"
+            wx:for="{{bristolList}}" wx:key="type" hover-class="hv"
+            data-type="{{item.type}}" bindtap="onTypeTap">
+        <view class="b-badge">{{item.type}}</view>
+        <view class="b-info">
+          <text class="b-name">{{item.name}}</text>
+          <text class="b-desc" wx:if="{{activeType === item.type}}">{{item.desc}}</text>
+        </view>
+        <text class="b-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="card-title">常见问题</text>
+    <view class="faq-item" wx:for="{{faq}}" wx:key="q" hover-class="hv"
+          data-idx="{{index}}" bindtap="toggleFaq">
+      <view class="faq-q">
+        <text>{{item.q}}</text>
+        <text class="faq-arrow">{{item.open ? '▾' : '▸'}}</text>
+      </view>
+      <text class="faq-a" wx:if="{{item.open}}">{{item.a}}</text>
+    </view>
+  </view>
+
+  <view class="disclaimer">⚠️ 本小程序数据仅作记录与参考，不构成医疗建议。持续异常请及时就医。</view>
+</view>

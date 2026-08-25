@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="card">
+    <view class="cell">
+      <text class="cell-label">开启提醒</text>
+      <switch checked="{{enabled}}" color="#34C759" bindchange="onEnabledChange"/>
+    </view>
+    <view class="cell">
+      <text class="cell-label">提醒时间</text>
+      <picker mode="time" value="{{time}}" bindchange="onTimeChange">
+        <view class="cell-value" hover-class="hv">{{time}} ›</view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="card-title">重复周期</text>
+    <view class="days">
+      <view class="day-chip {{item.on ? 'on' : ''}}" wx:for="{{days}}" wx:key="key"
+            data-key="{{item.key}}" bindtap="toggleDay" hover-class="hv">{{item.label}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="card-title">推送方式</text>
+    <text class="desc">提醒将通过微信「服务通知」推送。首次使用需授权订阅（一次性订阅，可多次授权）。</text>
+    <button class="btn-sub" hover-class="hv" bindtap="onSubscribe">授权订阅消息</button>
+  </view>
+
+  <button class="btn-save" hover-class="hv" bindtap="save" disabled="{{saving}}">
+    {{saving ? '保存中…' : '保存设置'}}
+  </button>
+</view>

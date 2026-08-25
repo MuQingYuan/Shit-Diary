@@ -9,10 +9,6 @@
     "pages/profile/profile",
     "pages/guide/guide"
   ],
-  "subpackages": [
-    { "root": "subpackages/community", "pages": ["rank/rank", "post/post"] },
-    { "root": "subpackages/toolbox", "pages": ["test/test", "knowledge/knowledge"] }
-  ],
   "window": {
     "navigationBarBackgroundColor": "#F2F2F7",
     "navigationBarTitleText": "嗯嗯日记",

@@ -1,0 +1,34 @@
+<view class="page">
+  <view class="card profile">
+    <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="hv">
+      <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" class="avatar-img"/>
+      <text wx:else>{{nickname[0]}}</text>
+      <view class="avatar-mask">点击更换</view>
+    </button>
+    <input class="nick-input" type="nickname" value="{{nickname}}" bindinput="onNickname" placeholder="输入昵称"/>
+    <button class="btn-save" hover-class="hv" bindtap="save" disabled="{{saving}}">{{saving ? '保存中…' : '保存资料'}}</button>
+  </view>
+
+  <view class="stat-row">
+    <view class="stat"><text class="num">{{streak}}</text><text class="lbl">连续天数</text></view>
+    <view class="stat"><text class="num">{{total}}</text><text class="lbl">累计记录</text></view>
+    <view class="stat"><text class="num">{{todayCount}}</text><text class="lbl">今日</text></view>
+  </view>
+
+  <view class="card menu">
+    <view class="cell" bindtap="goGuide" hover-class="hv">新手引导<text class="arrow">›</text></view>
+    <view class="cell" bindtap="goRemind" hover-class="hv">提醒设置<text class="arrow">›</text></view>
+    <view class="cell" bindtap="goHistory" hover-class="hv">历史记录<text class="arrow">›</text></view>
+    <button class="cell share-cell" open-type="share">分享给好友<text class="arrow">›</text></button>
+    <view class="cell" bindtap="clearCache" hover-class="hv">清除本地缓存<text class="arrow">›</text></view>
+    <view class="cell" bindtap="openAbout" hover-class="hv">关于与免责声明<text class="arrow">›</text></view>
+  </view>
+
+  <view class="mask" wx:if="{{showAbout}}" bindtap="closeAbout">
+    <view class="about-panel" catchtap="noop">
+      <text class="about-title">关于「嗯嗯日记」</text>
+      <text class="about-body">本小程序用于个人排便健康记录与习惯参考，所有数据仅作记录与趋势展示，不构成任何医疗建议。如有身体不适，请及时就医。</text>
+      <button class="about-close" hover-class="hv" bindtap="closeAbout">知道了</button>
+    </view>
+  </view>
+</view>

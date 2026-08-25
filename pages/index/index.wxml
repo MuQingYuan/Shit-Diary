@@ -1,56 +1,93 @@
 <view class="page">
+
   <view class="header">
-    <view class="header-left">
+    <view class="header-left" bindtap="goProfile" hover-class="hv" hover-stay-time="80">
       <text class="title">嗯嗯日记</text>
       <text class="date">{{today}}</text>
     </view>
-    <view class="avatar"><text>我</text></view>
-  </view>
-
-  <view class="card hero">
-    <view class="hero-icon">
-      <text class="hero-symbol">💩</text>
-    </view>
-    <text class="hero-title">{{heroTitle}}</text>
-    <text class="hero-sub">{{heroSub}}</text>
-    <button class="btn-record" bindtap="goRecord">{{btnText}}</button>
-  </view>
-
-  <view class="stats-row">
-    <view class="card stat">
-      <text class="stat-label">连续打卡</text>
-      <text class="stat-num">{{streak}}<text class="stat-unit"> 天</text></text>
-    </view>
-    <view class="card stat">
-      <text class="stat-label">累计记录</text>
-      <text class="stat-num">{{total}}<text class="stat-unit"> 次</text></text>
-    </view>
-  </view>
-
-  <view class="card trend">
-    <view class="trend-head">
-      <text class="card-title">本周趋势</text>
-      <text class="trend-tag">近 7 天</text>
-    </view>
-    <view class="bars">
-      <view class="bar-item" wx:for="{{bars}}" wx:key="index">
-        <view class="bar {{item.h>=160?'hot':''}}" style="height:{{item.h}}rpx;"></view>
-        <text class="bar-day">{{item.day}}</text>
+    <view class="header-right">
+      <button class="share-btn" open-type="share" hover-class="hv" aria-label="分享">↗</button>
+      <view class="avatar" bindtap="goProfile" hover-class="hv" hover-stay-time="80">
+        <image wx:if="{{avatarUrl}}" src="{{avatarUrl}}" mode="aspectFill" class="avatar-img"/>
+        <text wx:else>{{nickname[0]}}</text>
       </view>
     </view>
   </view>
 
-  <view class="card remind">
-    <view class="remind-left">
-      <text class="card-title">晨间提醒</text>
-      <text class="remind-sub">每天 08:00 · 服务通知</text>
-    </view>
-    <switch checked="{{remindOn}}" color="#34C759" bindchange="onRemind"/>
+  <view wx:if="{{error}}" class="error-bar">
+    <text class="error-text">{{error}}</text>
+    <text class="error-retry" bindtap="loadHome" hover-class="hv">重试</text>
   </view>
 
-  <view class="card about">
-    <text class="card-title">肠道周报</text>
-    <text class="about-sub">连续记录 7 天，解锁你的专属肠道报告</text>
-    <text class="about-link" bindtap="goStats">去看看 ›</text>
+  <view class="skeleton" wx:if="{{loading}}">
+    <view class="sk-card"></view>
+    <view class="sk-row">
+      <view class="sk-half"></view>
+      <view class="sk-half"></view>
+    </view>
+    <view class="sk-card"></view>
   </view>
+
+  <block wx:else>
+    <view class="card hero">
+      <view class="hero-icon {{recordedToday ? 'done' : ''}}">
+        <text>{{recordedToday ? '✓' : '💩'}}</text>
+      </view>
+      <text class="hero-title">{{recordedToday ? '今日已记录 ' + todayCount + ' 次' : '今天还未记录'}}</text>
+      <text class="hero-sub">{{recordedToday ? '规律打卡，从每一天开始' : '点一下，3 秒完成记录'}}</text>
+      <button class="btn-record {{submitting ? 'disabled' : ''}}" hover-class="btn-hv"
+              disabled="{{submitting}}" bindtap="onQuickRecord">
+        {{submitting ? '记录中…' : (recordedToday ? '再记一次' : '立即记录')}}
+      </button>
+      <text class="hero-link" bindtap="goRecord" hover-class="hv">需要详细记录？去记录页 ›</text>
+    </view>
+
+    <view class="stat-row">
+      <view class="card stat" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+        <text class="stat-label">连续打卡</text>
+        <text class="stat-num">{{streak}}<text class="stat-unit"> 天</text></text>
+        <text class="stat-arrow">›</text>
+      </view>
+      <view class="card stat" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+        <text class="stat-label">累计记录</text>
+        <text class="stat-num">{{total}}<text class="stat-unit"> 次</text></text>
+        <text class="stat-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="card trend" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+      <view class="trend-head">
+        <text class="card-title">本周趋势</text>
+        <text class="trend-tag">{{weekTotal > 0 ? '共 ' + weekTotal + ' 次 · 日均 ' + avgPerDay : '近 7 天'}}</text>
+      </view>
+      <view class="bars" wx:if="{{bars.length}}">
+        <view class="bar-item" wx:for="{{bars}}" wx:key="date">
+          <text class="bar-count" wx:if="{{item.count > 0}}">{{item.count}}</text>
+          <view class="bar {{item.hot ? 'hot' : ''}}" style="height:{{item.h}}rpx;"></view>
+          <text class="bar-day">{{item.day}}</text>
+        </view>
+      </view>
+      <view class="empty" wx:else>
+        <text>本周还没有记录，点我去打卡 ›</text>
+      </view>
+    </view>
+
+    <view class="card remind">
+      <view class="remind-main" bindtap="goRemind" hover-class="hv" hover-stay-time="80">
+        <text class="card-title">晨间提醒</text>
+        <text class="remind-sub">{{remindOn ? '每天 ' + remindTime + ' · 服务通知' : '已关闭 · 点按开启提醒'}}</text>
+      </view>
+      <view class="remind-switch" catchtap="noop">
+        <switch checked="{{remindOn}}" color="#34C759" bindchange="onRemindChange"/>
+      </view>
+    </view>
+
+    <view class="card about" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+      <text class="card-title">肠道周报</text>
+      <text class="about-sub">连续记录 7 天，解锁专属肠道报告</text>
+      <text class="about-link">去看看 ›</text>
+    </view>
+  </block>
+
+  <view class="safe-bottom"></view>
 </view>

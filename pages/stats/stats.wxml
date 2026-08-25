@@ -1,0 +1,58 @@
+<view class="page">
+  <view class="seg">
+    <view class="seg-item {{period === 'week' ? 'on' : ''}}" data-p="week" bindtap="switchPeriod">本周</view>
+    <view class="seg-item {{period === 'month' ? 'on' : ''}}" data-p="month" bindtap="switchPeriod">本月</view>
+  </view>
+
+  <view class="metrics">
+    <view class="metric">
+      <text class="m-label">记录次数</text>
+      <text class="m-num">{{total}}</text>
+    </view>
+    <view class="metric">
+      <text class="m-label">日均次数</text>
+      <text class="m-num">{{avgPerDay}}</text>
+    </view>
+    <view class="metric">
+      <text class="m-label">平均时长</text>
+      <text class="m-num small">{{avgDur}}</text>
+    </view>
+    <view class="metric">
+      <text class="m-label">理想型占比</text>
+      <text class="m-num small">{{idealPct}}</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-head">
+      <text class="card-title">每日次数</text>
+      <text class="card-link" bindtap="goHistory">明细 ›</text>
+    </view>
+    <view class="bars">
+      <view class="bar-item" wx:for="{{bars}}" wx:key="date">
+        <text class="bar-count" wx:if="{{item.count > 0}}">{{item.count}}</text>
+        <view class="bar {{item.hot ? 'hot' : ''}}" style="height:{{item.h}}rpx;"></view>
+        <text class="bar-day">{{item.day}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="card-title">Bristol 类型分布</text>
+    <view class="dist-item" wx:for="{{dist}}" wx:key="type">
+      <text class="dist-name">{{item.name}}</text>
+      <view class="dist-track">
+        <view class="dist-fill" style="width:{{item.pct}}%;"></view>
+      </view>
+      <text class="dist-pct">{{item.pct}}%</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <text class="card-title">高频症状</text>
+    <view class="sym-row" wx:if="{{symptoms.length}}">
+      <view class="sym-chip" wx:for="{{symptoms}}" wx:key="name">{{item.name}} ×{{item.count}}</view>
+    </view>
+    <view class="empty" wx:else>本周期暂无症状记录</view>
+  </view>
+</view>
