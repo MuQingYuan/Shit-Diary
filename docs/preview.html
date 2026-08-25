@@ -399,20 +399,28 @@ const App = {
     this.tab = tab;
     this.renderNav();
     this.render();
+    this.resetScroll();
   },
 
   push(page) {
     this.stack.push(page);
     this.renderNav();
     this.render();
+    this.resetScroll();
   },
   back() {
     this.stack.pop();
     this.renderNav();
     this.render();
+    this.resetScroll();
   },
 
   currentPage() { return this.stack.length ? this.stack[this.stack.length - 1] : this.tab; },
+
+  resetScroll() {
+    const page = document.getElementById('page');
+    if (page) page.scrollTop = 0;
+  },
 
   renderNav() {
     const nav = document.getElementById('navbar');
@@ -459,7 +467,6 @@ const App = {
     const page = document.getElementById('page');
     const p = this.currentPage();
     page.innerHTML = this[this.renderMap[p]]();
-    page.scrollTop = 0;
   },
 
   share() {
