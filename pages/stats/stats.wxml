@@ -28,23 +28,20 @@
       <text class="card-title">每日次数</text>
       <text class="card-link" bindtap="goHistory">明细 ›</text>
     </view>
-    <view class="bars">
-      <view class="bar-item" wx:for="{{bars}}" wx:key="date">
-        <text class="bar-count" wx:if="{{item.count > 0}}">{{item.count}}</text>
-        <view class="bar {{item.hot ? 'hot' : ''}}" style="height:{{item.h}}rpx;"></view>
-        <text class="bar-day">{{item.day}}</text>
-      </view>
-    </view>
+    <canvas type="2d" id="trendCanvas" class="trend-canvas"></canvas>
   </view>
 
   <view class="card">
     <text class="card-title">Bristol 类型分布</text>
-    <view class="dist-item" wx:for="{{dist}}" wx:key="type">
-      <text class="dist-name">{{item.name}}</text>
-      <view class="dist-track">
-        <view class="dist-fill" style="width:{{item.pct}}%;"></view>
+    <view class="ring-wrap">
+      <canvas type="2d" id="ringCanvas" class="ring-canvas"></canvas>
+      <view class="ring-legend">
+        <view class="legend-item" wx:for="{{dist}}" wx:key="type">
+          <view class="legend-dot" style="background:{{item.color}};"></view>
+          <text class="legend-name">{{item.name}}</text>
+          <text class="legend-pct">{{item.pct}}%</text>
+        </view>
       </view>
-      <text class="dist-pct">{{item.pct}}%</text>
     </view>
   </view>
 

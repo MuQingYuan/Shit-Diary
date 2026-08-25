@@ -117,6 +117,17 @@
   .bar { width: 20px; border-radius: 4px; background: #C8E6CB; min-height: 5px; }
   .bar.hot { background: #34C759; }
   .bar-day { font-size: 10px; color: #8E8E93; }
+
+  .chart-canvas { display: block; width: 100%; }
+  .chart-canvas.trend { height: 120px; }
+  .ring-wrap { display: flex; align-items: center; margin-top: 12px; }
+  .ring-canvas { width: 130px; height: 130px; flex-shrink: 0; }
+  .ring-legend { flex: 1; margin-left: 16px; }
+  .legend-item { display: flex; align-items: center; margin-bottom: 7px; }
+  .legend-item:last-child { margin-bottom: 0; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-right: 8px; }
+  .legend-name { flex: 1; font-size: 12px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .legend-pct { width: 42px; text-align: right; font-size: 12px; color: #8E8E93; flex-shrink: 0; }
   .empty { text-align: center; color: #8E8E93; font-size: 12px; padding: 26px 0; }
 
   .remind { display: flex; justify-content: space-between; align-items: center; }
@@ -359,6 +370,9 @@ const SYMPTOMS = ['费力', '出血', '疼痛', '腹胀', '未排净', '紧急']
 const AMOUNTS = ['少', '中', '多'];
 const MOODS = ['轻松', '正常', '不适'];
 const COLORS = ['棕', '深棕', '浅棕', '绿', '黑', '红', '其他'];
+const BRISTOL_COLORS = {
+  1: '#C0563B', 2: '#E08A3C', 3: '#9CCC65', 4: '#34C759', 5: '#26A69A', 6: '#42A5F5', 7: '#AB47BC'
+};
 
 const pad = (n) => (n < 10 ? '0' + n : '' + n);
 const fmtDate = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -366,6 +380,83 @@ const fmtHM = (d) => pad(d.getHours()) + ':' + pad(d.getMinutes());
 const todayStr = () => fmtDate(new Date());
 const cnToday = () => { const d = new Date(); return (d.getMonth() + 1) + '月' + d.getDate() + '日 · 周' + WEEK[d.getDay()]; };
 const durText = (sec) => { if (!sec) return '—'; if (sec < 60) return sec + '秒'; const m = Math.floor(sec / 60); return sec % 60 ? m + '分' + (sec % 60) + '秒' : m + '分钟'; };
+
+/* ================= 图表（与小程序 utils/chart.js 同源） ================= */
+function hexA(hex, a) {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+function drawTrend(ctx, w, h, opt) {
+  const labels = opt.labels || [], values = opt.values || [], color = opt.color || '#34C759';
+  const n = values.length; if (!n) return;
+  const padL = 10, padR = 10, padT = 22, padB = 24;
+  const plotW = w - padL - padR, plotH = h - padT - padB;
+  const maxV = Math.max(opt.maxY || 0, ...values, 1);
+  ctx.strokeStyle = '#ECECEF'; ctx.lineWidth = 1;
+  for (let g = 0; g <= 2; g++) { const y = Math.round(padT + (plotH * g) / 2) + 0.5; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke(); }
+  const xAt = (i) => (n === 1 ? padL + plotW / 2 : padL + (plotW * i) / (n - 1));
+  const yAt = (v) => padT + plotH * (1 - v / maxV);
+  const grad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+  grad.addColorStop(0, hexA(color, 0.30)); grad.addColorStop(1, hexA(color, 0.02));
+  ctx.beginPath(); ctx.moveTo(xAt(0), yAt(values[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(values[i]));
+  ctx.lineTo(xAt(n - 1), padT + plotH); ctx.lineTo(xAt(0), padT + plotH); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xAt(0), yAt(values[0]));
+  for (let i = 1; i < n; i++) ctx.lineTo(xAt(i), yAt(values[i]));
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+  if (n <= 7) {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    for (let i = 0; i < n; i++) {
+      ctx.beginPath(); ctx.arc(xAt(i), yAt(values[i]), 3, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke();
+      if (values[i] > 0) { ctx.fillStyle = '#1C1C1E'; ctx.font = '10px sans-serif'; ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 9); }
+    }
+  }
+  ctx.fillStyle = '#8E8E93'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  const labelStep = n > 14 ? Math.ceil(n / 6) : 1;
+  for (let i = 0; i < n; i++) { if (n <= 14 || i % labelStep === 0 || i === n - 1) ctx.fillText(labels[i], xAt(i), h - 6); }
+}
+function drawRing(ctx, w, h, opt) {
+  const segments = (opt.segments || []).filter((s) => s.value > 0);
+  const total = segments.reduce((s, x) => s + x.value, 0);
+  const cx = w / 2, cy = h / 2, rOuter = Math.min(w, h) / 2 - 4, rInner = rOuter * 0.62, rMid = (rOuter + rInner) / 2, thickness = rOuter - rInner;
+  ctx.clearRect(0, 0, w, h);
+  if (!total) {
+    ctx.beginPath(); ctx.arc(cx, cy, rMid, 0, Math.PI * 2); ctx.lineWidth = thickness; ctx.strokeStyle = '#ECECEF'; ctx.stroke();
+    ctx.fillStyle = '#8E8E93'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(opt.emptyText || '暂无数据', cx, cy); return;
+  }
+  let start = -Math.PI / 2;
+  segments.forEach((seg) => { const ang = (seg.value / total) * Math.PI * 2; ctx.beginPath(); ctx.arc(cx, cy, rMid, start, start + ang); ctx.lineWidth = thickness; ctx.strokeStyle = seg.color; ctx.stroke(); start += ang; });
+  ctx.textAlign = 'center';
+  if (opt.centerTop) { ctx.fillStyle = opt.centerColor || '#1C1C1E'; ctx.font = '600 22px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(String(opt.centerTop), cx, cy + 4); }
+  if (opt.centerBottom) { ctx.fillStyle = '#8E8E93'; ctx.font = '11px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(opt.centerBottom, cx, cy + 22); }
+}
+// 取 canvas 并按 dpr 缩放后绘制（浏览器版）
+function drawCanvas2D(id, fn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const dpr = window.devicePixelRatio || 2;
+  const w = el.clientWidth, h = el.clientHeight;
+  if (!w || !h) return;
+  el.width = w * dpr; el.height = h * dpr;
+  const ctx = el.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  fn(ctx, w, h);
+}
+function renderStatsCharts() {
+  const d = App.statsData(App.statsPeriod);
+  drawCanvas2D('trendCanvas', (ctx, w, h) => drawTrend(ctx, w, h, { labels: d.bars.map((b) => b.day), values: d.bars.map((b) => b.count), color: '#34C759' }));
+  const total = d.dist.reduce((s, b) => s + b.count, 0);
+  const dom = d.dist.slice().sort((a, b) => b.count - a.count)[0];
+  drawCanvas2D('ringCanvas', (ctx, w, h) => drawRing(ctx, w, h, {
+    segments: d.dist.map((b) => ({ value: b.count, color: b.color })),
+    centerTop: String(total), centerBottom: '总记录', emptyText: '暂无数据',
+    centerColor: dom && dom.count ? dom.color : '#1C1C1E'
+  }));
+}
 
 let DB = null;
 function loadDB() {
@@ -522,6 +613,11 @@ const App = {
     const page = document.getElementById('page');
     const p = this.currentPage();
     page.innerHTML = this[this.renderMap[p]]();
+    this.afterRender(p);
+  },
+
+  afterRender(page) {
+    if (page === 'stats') { renderStatsCharts(); }
   },
 
   share() {
@@ -726,7 +822,7 @@ const App = {
     const ideal = list.filter((r) => r.bristolType === 4).length;
     const dist = BRISTOL.map((b) => {
       const c = list.filter((r) => r.bristolType === b.type).length;
-      return { ...b, count: c, pct: total ? Math.round(c / total * 100) : 0 };
+      return { ...b, count: c, pct: total ? Math.round(c / total * 100) : 0, color: BRISTOL_COLORS[b.type] };
     });
     const symMap = {};
     list.forEach((r) => r.symptomTags.forEach((t) => { symMap[t] = (symMap[t] || 0) + 1; }));
@@ -736,10 +832,10 @@ const App = {
   statsPeriod: 'week',
   renderStats() {
     const d = this.statsData(this.statsPeriod);
-    const barsHtml = d.bars.map((b) =>
-      '<div class="bar-item"><span class="bar-count">' + (b.count ? b.count : '') + '</span>' +
-      '<div class="bar ' + (b.hot ? 'hot' : '') + '" style="height:' + b.h + 'px"></div>' +
-      '<span class="bar-day">' + b.day + '</span></div>').join('');
+    const legendHtml = d.dist.map((b) =>
+      '<div class="legend-item"><span class="legend-dot" style="background:' + b.color + '"></span>' +
+      '<span class="legend-name">' + b.name + '</span>' +
+      '<span class="legend-pct">' + b.pct + '%</span></div>').join('');
     return '' +
       '<div class="seg"><div class="seg-item ' + (this.statsPeriod === 'week' ? 'on' : '') + '" onclick="App.switchPeriod(\'week\')">本周</div>' +
       '<div class="seg-item ' + (this.statsPeriod === 'month' ? 'on' : '') + '" onclick="App.switchPeriod(\'month\')">本月</div></div>' +
@@ -751,11 +847,10 @@ const App = {
       '</div>' +
       '<div class="card flat"><div class="trend-head"><span class="card-title">每日次数</span>' +
         '<span class="trend-tag" onclick="App.push(\'history\')" style="color:#34C759;cursor:pointer">明细 ›</span></div>' +
-        '<div class="bars">' + barsHtml + '</div></div>' +
+        '<canvas id="trendCanvas" class="chart-canvas trend"></canvas></div>' +
       '<div class="card flat"><div class="card-title">Bristol 类型分布</div>' +
-        d.dist.map((b) => '<div class="dist-item"><span class="dist-name">' + b.name + '</span>' +
-          '<div class="dist-track"><div class="dist-fill" style="width:' + b.pct + '%"></div></div>' +
-          '<span class="dist-pct">' + b.pct + '%</span></div>').join('') + '</div>' +
+        '<div class="ring-wrap"><canvas id="ringCanvas" class="ring-canvas"></canvas>' +
+        '<div class="ring-legend">' + legendHtml + '</div></div></div>' +
       '<div class="card flat"><div class="card-title">高频症状</div>' +
         (d.symptoms.length
           ? '<div class="chip-row">' + d.symptoms.map((s) => '<span class="chip">' + s.name + ' ×' + s.count + '</span>').join('') + '</div>'

@@ -9,6 +9,17 @@ const BRISTOL = [
   { type: 7, name: '7型 · 水样', desc: '完全水样无固体，腹泻' },
 ];
 
+// Bristol 类型配色：便秘(暖)/理想(绿)/腹泻(冷) 渐变语义
+const BRISTOL_COLORS = {
+  1: '#C0563B', // 硬块 · 便秘
+  2: '#E08A3C', // 块状 · 偏硬
+  3: '#9CCC65', // 裂纹 · 正常
+  4: '#34C759', // 理想 · 最绿
+  5: '#26A69A', // 软团 · 偏软
+  6: '#42A5F5', // 糊状 · 偏腹泻
+  7: '#AB47BC', // 水样 · 腹泻
+};
+
 const SYMPTOMS = ['费力', '出血', '疼痛', '腹胀', '未排净', '紧急'];
 const COLORS = ['棕', '深棕', '浅棕', '绿', '黑', '红', '其他'];
 
@@ -28,4 +39,4 @@ function bristolName(type) {
   return item ? item.name : '未知';
 }
 
-module.exports = { BRISTOL, SYMPTOMS, COLORS, WEEK_DAYS, bristolName };
+module.exports = { BRISTOL, BRISTOL_COLORS, SYMPTOMS, COLORS, WEEK_DAYS, bristolName };
