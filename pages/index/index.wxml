@@ -114,8 +114,6 @@
         <view class="preset {{quickForm.durationSec === 300 ? 'on' : ''}}" data-sec="300" bindtap="quickPreset">5 分钟</view>
         <view class="preset {{quickForm.durationSec === 600 ? 'on' : ''}}" data-sec="600" bindtap="quickPreset">10 分钟</view>
         <view class="preset {{quickForm.durationSec === 1800 ? 'on' : ''}}" data-sec="1800" bindtap="quickPreset">30 分钟</view>
-        <view class="preset {{quickForm.durationSec === 3600 ? 'on' : ''}}" data-sec="3600" bindtap="quickPreset">1 小时</view>
-        <view class="preset {{quickForm.durationSec === 5400 ? 'on' : ''}}" data-sec="5400" bindtap="quickPreset">1.5 小时</view>
       </view>
 
       <view class="qp-actions">
