@@ -131,21 +131,6 @@
 .btn-hv { opacity: 0.85; transform: scale(0.985); }
 .hero-link { margin-top: 24rpx; font-size: 24rpx; color: #34C759; }
 
-/* 统计卡 */
-.stat-row { display: flex; gap: 24rpx; }
-.stat { flex: 1; position: relative; }
-.stat-label { display: block; font-size: 24rpx; color: #8E8E93; }
-.stat-num { display: block; margin-top: 8rpx; font-size: 44rpx; font-weight: 600; line-height: 1.2; }
-.stat-unit { font-size: 24rpx; color: #8E8E93; font-weight: 400; }
-.stat-arrow {
-  position: absolute;
-  right: 24rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 36rpx;
-  color: #C7C7CC;
-}
-
 /* 趋势 */
 .trend-head {
   display: flex;
@@ -223,6 +208,14 @@
   margin: 0 auto 24rpx;
 }
 .qp-title { font-size: 34rpx; font-weight: 600; text-align: center; }
+.qp-tip {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: #8E8E93;
+  text-align: center;
+  line-height: 1.5;
+}
 .qp-label { font-size: 26rpx; font-weight: 500; margin: 28rpx 0 16rpx; }
 .qp-dur { color: #34C759; font-weight: 600; margin-left: 8rpx; }
 .qp-bristol { display: flex; justify-content: space-between; }

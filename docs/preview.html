@@ -102,13 +102,6 @@
   .btn-primary:disabled { opacity: .55; }
   .link-btn { font-size: 12px; color: #34C759; margin-top: 12px; background: none; border: none; cursor: pointer; }
 
-  .stat-row { display: flex; gap: 12px; }
-  .stat { flex: 1; position: relative; }
-  .stat-label { font-size: 12px; color: #8E8E93; }
-  .stat-num { font-size: 26px; font-weight: 700; margin-top: 4px; }
-  .stat-num .unit { font-size: 12px; color: #8E8E93; font-weight: 400; }
-  .stat-arrow { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: #C7C7CC; font-size: 22px; }
-
   .trend-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .trend-tag { font-size: 11px; color: #8E8E93; }
   .bars { display: flex; align-items: flex-end; justify-content: space-between; height: 96px; padding: 0 4px; }
@@ -351,6 +344,7 @@
   }
   @keyframes qpUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   .qp-title { font-size: 16px; font-weight: 600; text-align: center; margin-bottom: 12px; }
+  .qp-tip { font-size: 11px; color: #8E8E93; text-align: center; line-height: 1.6; margin-bottom: 4px; }
   .qp-label { font-size: 13px; font-weight: 600; margin: 12px 0 8px; }
   .qp-dur { color: #34C759; font-weight: 700; margin-left: 6px; }
   .qp-bristol { display: flex; justify-content: space-between; }
@@ -435,6 +429,7 @@
   <div class="quick-mask" id="quickMask" onclick="App.closeQuick()">
     <div class="quick-panel" onclick="event.stopPropagation()">
       <div class="qp-title">快捷记录</div>
+      <div class="qp-tip">一键快捷记录 · 其他字段按默认值：量 中 / 颜色 棕 / 心情 正常 / 症状 无</div>
       <div class="qp-label">Bristol 类型</div>
       <div class="qp-bristol" id="quickBristol"></div>
       <div class="qp-label">时长 <span class="qp-dur" id="quickDur">5 分钟</span></div>
@@ -736,6 +731,8 @@ const App = {
     this.render();
     this.resetScroll();
   },
+  // 本周趋势 → 统计页并定位到「本周」tab
+  goStatsWeek() { this.statsPeriod = 'week'; this.go('stats'); },
 
   push(page) {
     this.stack.push(page);
@@ -864,13 +861,7 @@ const App = {
         '<button class="btn-primary" onclick="App.openQuick()">' + (recorded ? '再记一次' : '立即记录') + '</button>' +
         '<button class="link-btn" onclick="App.go(\'record\')">需要详细记录？去记录页 ›</button>' +
       '</div>' +
-      '<div class="stat-row">' +
-        '<div class="card stat" onclick="App.go(\'stats\')"><div class="stat-label">连续打卡</div>' +
-          '<div class="stat-num">' + d.streak + '<span class="unit"> 天</span></div><span class="stat-arrow">›</span></div>' +
-        '<div class="card stat" onclick="App.go(\'stats\')"><div class="stat-label">累计记录</div>' +
-          '<div class="stat-num">' + DB.records.length + '<span class="unit"> 次</span></div><span class="stat-arrow">›</span></div>' +
-      '</div>' +
-      '<div class="card" onclick="App.go(\'stats\')">' +
+      '<div class="card" onclick="App.goStatsWeek()">' +
         '<div class="trend-head"><span class="card-title">本周趋势</span>' +
           '<span class="trend-tag">' + (d.weekTotal ? '共 ' + d.weekTotal + ' 次 · 日均 ' + d.avgPerDay : '近 7 天') + '</span></div>' +
         (d.weekTotal ? '<div class="bars">' + barsHtml + '</div>' : '<div class="empty">本周还没有记录，点我去打卡 ›</div>') +

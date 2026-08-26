@@ -41,20 +41,7 @@
       <text class="hero-link" bindtap="goRecord" hover-class="hv">需要详细记录？去记录页 ›</text>
     </view>
 
-    <view class="stat-row">
-      <view class="card stat" bindtap="goStats" hover-class="hv" hover-stay-time="80">
-        <text class="stat-label">连续打卡</text>
-        <text class="stat-num">{{streak}}<text class="stat-unit"> 天</text></text>
-        <text class="stat-arrow">›</text>
-      </view>
-      <view class="card stat" bindtap="goStats" hover-class="hv" hover-stay-time="80">
-        <text class="stat-label">累计记录</text>
-        <text class="stat-num">{{total}}<text class="stat-unit"> 次</text></text>
-        <text class="stat-arrow">›</text>
-      </view>
-    </view>
-
-    <view class="card trend" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+    <view class="card trend" bindtap="goStatsWeek" hover-class="hv" hover-stay-time="80">
       <view class="trend-head">
         <text class="card-title">本周趋势</text>
         <text class="trend-tag">{{weekTotal > 0 ? '共 ' + weekTotal + ' 次 · 日均 ' + avgPerDay : '近 7 天'}}</text>
@@ -95,6 +82,7 @@
     <view class="quick-panel" catchtap="noop">
       <view class="qp-handle"></view>
       <view class="qp-title">快捷记录</view>
+      <text class="qp-tip">一键快捷记录 · 其他字段按默认值：量 中 / 颜色 棕 / 心情 正常 / 症状 无</text>
 
       <view class="qp-label">Bristol 类型</view>
       <view class="qp-bristol">

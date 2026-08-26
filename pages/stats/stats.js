@@ -18,6 +18,17 @@ Page({
   },
 
   onLoad() { this.load(); },
+  onShow() {
+    // 首页「本周趋势」跳转时携带目标 tab，定位到对应周期
+    const app = getApp();
+    const pending = app && app.globalData && app.globalData.statsPeriod;
+    if (!pending) return;
+    app.globalData.statsPeriod = null;
+    if (pending !== this.data.period) {
+      this.setData({ period: pending });
+      this.load();
+    }
+  },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
 
   switchPeriod(e) {

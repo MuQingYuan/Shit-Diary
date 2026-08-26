@@ -176,6 +176,12 @@ Page({
 
   goRecord() { wx.switchTab({ url: '/pages/record/record' }); },
   goStats() { wx.switchTab({ url: '/pages/stats/stats' }); },
+  // 本周趋势 → 跳转统计页并定位到「本周」tab
+  goStatsWeek() {
+    const app = getApp();
+    if (app && app.globalData) app.globalData.statsPeriod = 'week';
+    wx.switchTab({ url: '/pages/stats/stats' });
+  },
   goRemind() { wx.navigateTo({ url: '/pages/remind/remind' }); },
   goProfile() { wx.switchTab({ url: '/pages/profile/profile' }); },
 
