@@ -1,8 +1,12 @@
 <view class="page">
-  <view class="filter">
-    <picker mode="selector" range="{{months}}" value="{{monthIndex}}" bindchange="onMonthChange">
-      <view class="filter-btn" hover-class="hv">{{months[monthIndex] || '全部'}} 月份 ▾</view>
-    </picker>
+  <!-- 年份筛选条（常驻顶部，可横向滚动） -->
+  <view class="filter-bar">
+    <scroll-view scroll-x class="year-scroll" enable-flex>
+      <view class="year-chip {{yearIndex === idx ? 'active' : ''}}"
+            wx:for="{{years}}" wx:key="*this" wx:for-index="idx"
+            hover-class="hv" data-idx="{{idx}}" bindtap="onYearChange">{{item}}</view>
+    </scroll-view>
+    <text class="total-tip">共 {{total}} 条记录</text>
   </view>
 
   <view wx:if="{{loading}}" class="loading">加载中…</view>
@@ -12,9 +16,12 @@
     <text>还没有记录，快去打卡吧</text>
   </view>
 
-  <view wx:else>
-    <view class="group" wx:for="{{list}}" wx:key="date" wx:for-index="gi">
-      <text class="group-date">{{item.label}}</text>
+  <scroll-view wx:else scroll-y class="list-scroll">
+    <view class="group" wx:for="{{list}}" wx:key="key" wx:for-index="gi">
+      <view class="group-head">
+        <text class="group-date">{{item.label}}</text>
+        <text class="group-count">{{item.items.length}} 次</text>
+      </view>
       <view class="row" wx:for="{{item.items}}" wx:for-item="rec" wx:for-index="ii" wx:key="_id"
             hover-class="hv" data-gi="{{gi}}" data-ii="{{ii}}" bindtap="openDetail">
         <text class="row-time">{{rec.time || ''}}</text>
@@ -25,7 +32,8 @@
         <text class="arrow">›</text>
       </view>
     </view>
-  </view>
+    <view class="list-bottom">没有更多了</view>
+  </scroll-view>
 
   <view class="mask" wx:if="{{detail}}" bindtap="closeDetail">
     <view class="detail-panel" catchtap="noop">

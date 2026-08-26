@@ -240,7 +240,34 @@
   .day-chip.on { background: #34C759; color: #fff; font-weight: 600; }
 
   .list-group { margin-bottom: 18px; }
-  .group-date { font-size: 12px; color: #8E8E93; margin: 0 4px 8px; }
+  /* 年份筛选条（常驻顶部，随列表滚动吸顶） */
+  .hist-years {
+    position: sticky; top: 0; z-index: 6;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+    padding: 10px 0 8px; margin-bottom: 4px;
+    background: #F2F2F7;
+  }
+  .hist-years::-webkit-scrollbar { display: none; }
+  .hist-year {
+    flex: 0 0 auto;
+    padding: 6px 16px; border-radius: 999px;
+    background: #fff; color: #1C1C1E; font-size: 13px; cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .hist-year.on { background: #34C759; color: #fff; font-weight: 600; }
+  .hist-year:active { opacity: .8; }
+  .hist-total { font-size: 12px; color: #8E8E93; margin: 0 4px 10px; }
+  .hist-list { padding-bottom: 8px; }
+  .group-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 0 4px 8px;
+  }
+  .group-date { font-size: 14px; font-weight: 600; color: #1C1C1E; }
+  .group-count {
+    font-size: 11px; color: #8E8E93; background: #E9E9EE;
+    padding: 2px 10px; border-radius: 999px;
+  }
+  .list-bottom { text-align: center; color: #C7C7CC; font-size: 12px; padding: 14px 0 4px; }
   .list-row {
     display: flex; align-items: center; background: #fff;
     border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer;
@@ -677,6 +704,7 @@ const App = {
   stack: [],          // 子页栈（history/remind/guide）
   recordForm: null,
   durationPresets: DURATION_PRESETS,
+  historyYear: null,   // null = 全部；否则 'YYYY'
   noteExpanded: false,
 
   init() {
@@ -1155,20 +1183,49 @@ const App = {
   /* ================= 历史 ================= */
   renderHistory() {
     const sorted = DB.records.slice().sort((a, b) => b.timestamp - a.timestamp);
-    const map = {};
-    sorted.forEach((r) => { (map[r.date] = map[r.date] || []).push(r); });
-    const dates = Object.keys(map).sort().reverse();
-    if (!dates.length) return '<div class="empty" style="padding:80px 0">📖 还没有记录，快去打卡吧</div>';
-    return dates.map((date) =>
-      '<div class="list-group"><div class="group-date">' + fmtGroup(date) + '</div>' +
-      map[date].map((r) =>
+    // 按月份分组：key = 'YYYY-MM'
+    const monthMap = {};
+    const yearSet = {};
+    sorted.forEach((r) => {
+      const m = (r.date || '').slice(0, 7);
+      if (!m) return;
+      yearSet[m.slice(0, 4)] = true;
+      (monthMap[m] = monthMap[m] || []).push(r);
+    });
+    const months = Object.keys(monthMap).sort().reverse();
+    const years = ['全部'].concat(Object.keys(yearSet).sort().reverse());
+    const sel = this.historyYear; // null = 全部
+
+    if (!months.length) return '<div class="empty" style="padding:80px 0">📖 还没有记录，快去打卡吧</div>';
+
+    const groups = months.map((m) => {
+      const [y, mo] = m.split('-');
+      return { key: m, year: y, mLabel: Number(mo) + '月', label: y + '年' + Number(mo) + '月', items: monthMap[m] };
+    });
+    const filtered = sel
+      ? groups.filter((g) => g.year === sel).map((g) => ({ ...g, label: g.mLabel }))
+      : groups;
+    const total = filtered.reduce((s, g) => s + g.items.length, 0);
+
+    const yearBar = '<div class="hist-years">' + years.map((y) =>
+      '<span class="hist-year ' + ((sel || '全部') === y ? 'on' : '') + '" onclick="App.setHistoryYear(\'' + (y === '全部' ? '' : y) + '\')">' + y + '</span>').join('') + '</div>';
+
+    const groupsHtml = filtered.map((g) =>
+      '<div class="list-group"><div class="group-head"><span class="group-date">' + g.label + '</span>' +
+      '<span class="group-count">' + g.items.length + ' 次</span></div>' +
+      g.items.map((r) =>
         '<div class="list-row" onclick="App.showDetail(\'' + r.id + '\')">' +
         '<span class="row-time">' + r.time + '</span>' +
         '<div class="row-body"><span class="row-bristol">' + r.bristolType + ' 型</span>' +
         '<span class="row-dur">' + durText(r.durationSec) + '</span></div>' +
         '<span class="row-arrow">›</span></div>').join('') +
       '</div>').join('');
+
+    return yearBar +
+      '<div class="hist-total">共 ' + total + ' 条记录</div>' +
+      '<div class="hist-list">' + groupsHtml + '<div class="list-bottom">没有更多了</div></div>';
   },
+  setHistoryYear(y) { this.historyYear = y || null; this.render(); },
   showDetail(id) {
     const r = DB.records.find((x) => x.id === id);
     if (!r) return;

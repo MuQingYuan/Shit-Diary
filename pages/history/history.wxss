@@ -1,7 +1,8 @@
 .page {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #F2F2F7;
-  padding: 24rpx 32rpx 40rpx;
   box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
   color: #1C1C1E;
@@ -9,16 +10,32 @@
 
 .hv { opacity: 0.6; }
 
-.filter { margin-bottom: 20rpx; }
-.filter-btn {
-  display: inline-flex;
-  align-items: center;
+/* 年份筛选条（常驻顶部） */
+.filter-bar {
+  flex-shrink: 0;
+  padding: 20rpx 32rpx 16rpx;
+  background: #F2F2F7;
+}
+.year-scroll { white-space: nowrap; width: 100%; }
+.year-chip {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  margin-right: 16rpx;
   background: #fff;
-  padding: 14rpx 28rpx;
-  border-radius: 20rpx;
+  border-radius: 999rpx;
   font-size: 26rpx;
-  color: #34C759;
-  font-weight: 500;
+  color: #1C1C1E;
+}
+.year-chip.active {
+  background: #34C759;
+  color: #fff;
+  font-weight: 600;
+}
+.total-tip {
+  display: block;
+  font-size: 22rpx;
+  color: #8E8E93;
+  margin: 14rpx 4rpx 0;
 }
 
 .loading { text-align: center; color: #8E8E93; padding: 80rpx 0; font-size: 26rpx; }
@@ -32,12 +49,35 @@
 }
 .empty-icon { font-size: 80rpx; margin-bottom: 20rpx; }
 
-.group { margin-bottom: 32rpx; }
-.group-date {
-  display: block;
-  font-size: 24rpx;
-  color: #8E8E93;
+.list-scroll {
+  flex: 1;
+  padding: 8rpx 32rpx 40rpx;
+  box-sizing: border-box;
+}
+.group { margin-bottom: 28rpx; }
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0 8rpx 14rpx;
+}
+.group-date {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1C1C1E;
+}
+.group-count {
+  font-size: 22rpx;
+  color: #8E8E93;
+  background: #E9E9EE;
+  padding: 4rpx 16rpx;
+  border-radius: 999rpx;
+}
+.list-bottom {
+  text-align: center;
+  color: #C7C7CC;
+  font-size: 22rpx;
+  padding: 20rpx 0 10rpx;
 }
 .row {
   display: flex;

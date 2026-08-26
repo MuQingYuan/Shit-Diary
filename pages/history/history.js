@@ -4,9 +4,10 @@ const { BRISTOL, BRISTOL_COLORS } = require('../../utils/constants');
 Page({
   data: {
     loading: true,
-    list: [],          // 分组后的 [{ date, label, items: [] }]
-    months: [],        // 可选月份 ['2026-08', ...]
-    monthIndex: 0,     // 0 = 全部
+    list: [],          // 按月分组后的 [{ key, year, mLabel, label, items: [] }]
+    years: ['全部'],   // ['全部', '2026', '2025', ...]（倒序）
+    yearIndex: 0,      // 0 = 全部
+    total: 0,          // 当前筛选下的总条数
     detail: null,      // 详情弹窗数据
   },
 
@@ -28,49 +29,58 @@ Page({
   },
 
   build(records) {
-    const months = ['全部'];
-    const map = {};
+    // 按月份分组：key = 'YYYY-MM'
+    const monthMap = {};
+    const yearSet = {};
     records.forEach((r) => {
       const m = (r.date || '').slice(0, 7);
-      if (m && months.indexOf(m) === -1) months.push(m);
-      const key = r.date || '未知日期';
-      (map[key] = map[key] || []).push(r);
+      if (!m) return;
+      yearSet[m.slice(0, 4)] = true;
+      (monthMap[m] = monthMap[m] || []).push(r);
     });
-    const keys = Object.keys(map).sort().reverse();
-    const list = keys.map((date) => ({
-      date,
-      label: this.fmtLabel(date),
-      items: map[date].map((r) => ({
-        ...r,
-        durText: durText(r.durationSec),
-      })),
-    }));
 
-    this._allList = list;
+    // 月份列表（倒序）
+    const months = Object.keys(monthMap).sort().reverse();
+    const allList = months.map((m) => {
+      const [y, mo] = m.split('-');
+      return {
+        key: m,
+        year: y,
+        mLabel: Number(mo) + '月',
+        label: y + '年' + Number(mo) + '月',
+        items: monthMap[m].map((r) => ({ ...r, durText: durText(r.durationSec) })),
+      };
+    });
+
+    // 年份列表（倒序）
+    const years = ['全部'].concat(Object.keys(yearSet).sort().reverse());
+
+    this._allList = allList;
     this.setData({
-      months,
-      monthIndex: 0,
-      list: this.applyFilter(list, 0, months),
+      years,
+      yearIndex: 0,
+      total: records.length,
+      list: this.applyYear(allList, 0, years),
       loading: false,
     });
   },
 
-  fmtLabel(date) {
-    const d = new Date(date + 'T00:00:00');
-    const wd = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-    return `${Number(date.slice(5, 7))}月${Number(date.slice(8, 10))}日 周${wd}`;
+  // 0 = 全部；否则按年份过滤，单年模式下标题只显示「月」
+  applyYear(list, idx, years) {
+    if (!idx) return list;
+    const y = years[idx];
+    return list
+      .filter((g) => g.year === y)
+      .map((g) => ({ ...g, label: g.mLabel }));
   },
 
-  applyFilter(list, idx, months) {
-    if (!idx || !months[idx]) return list;
-    const m = months[idx];
-    return list.filter((g) => (g.date || '').slice(0, 7) === m);
-  },
-
-  onMonthChange(e) {
-    const idx = Number(e.detail.value);
-    this.setData({ monthIndex: idx });
-    this.setData({ list: this.applyFilter(this._allList, idx, this.data.months) });
+  onYearChange(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    this.setData({
+      yearIndex: idx,
+      list: this.applyYear(this._allList, idx, this.data.years),
+      total: this.applyYear(this._allList, idx, this.data.years).reduce((s, g) => s + g.items.length, 0),
+    });
   },
 
   openDetail(e) {
