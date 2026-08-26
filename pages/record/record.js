@@ -73,6 +73,12 @@ Page({
     const sec = Number(e.currentTarget.dataset.sec);
     this.setData({ 'form.durationSec': sec, durLabel: formatDuration(sec) });
   },
+  onStepDuration(e) {
+    const d = Number(e.currentTarget.dataset.d);
+    let sec = this.data.form.durationSec + d * 60; // 每分钟 ±1
+    sec = Math.max(0, Math.min(this.data.maxDuration, sec));
+    this.setData({ 'form.durationSec': sec, durLabel: formatDuration(sec) });
+  },
   onPickColor(e) {
     this.setData({ 'form.color': e.currentTarget.dataset.v });
   },

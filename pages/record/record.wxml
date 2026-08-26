@@ -25,6 +25,44 @@
             class="dur-chip {{form.durationSec===item.sec?'active':''}}"
             bindtap="onPickDuration" data-sec="{{item.sec}}">{{item.label}}</view>
     </view>
+    <view class="dur-custom">
+      <text class="dur-custom-label">自定义（每分钟 ±1）</text>
+      <view class="stepper">
+        <view class="step-btn" bindtap="onStepDuration" data-d="-1">−</view>
+        <text class="step-val">{{durLabel}}</text>
+        <view class="step-btn" bindtap="onStepDuration" data-d="1">＋</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="field">
+    <text class="label">时间</text>
+    <view class="picker-row">
+      <picker mode="date" value="{{form.date}}" bindchange="onDateChange">
+        <view class="picker-box">{{form.date}}</view>
+      </picker>
+      <picker mode="time" value="{{form.time}}" bindchange="onTimeChange">
+        <view class="picker-box">{{form.time}}</view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="field">
+    <text class="label">量</text>
+    <view class="tags">
+      <view wx:for="{{amountOptions}}" wx:key="*this"
+            class="tag {{form.amount===item?'active':''}}"
+            bindtap="onPickAmount" data-v="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="field">
+    <text class="label">颜色</text>
+    <view class="tags">
+      <view wx:for="{{colorOptions}}" wx:key="*this"
+            class="tag {{form.color===item?'active':''}}"
+            bindtap="onPickColor" data-v="{{item}}">{{item}}</view>
+    </view>
   </view>
 
   <view class="field">
@@ -37,6 +75,15 @@
   </view>
 
   <view class="field">
+    <text class="label">心情</text>
+    <view class="tags">
+      <view wx:for="{{moodOptions}}" wx:key="*this"
+            class="tag {{form.mood===item?'active':''}}"
+            bindtap="onPickMood" data-v="{{item}}">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="field">
     <view class="note-head {{noteExpanded?'open':''}}" bindtap="toggleNote">
       <text class="note-ico">📝</text>
       <text class="note-title">备注</text>
@@ -44,7 +91,7 @@
     </view>
     <block wx:if="{{noteExpanded}}">
       <textarea class="note-area" value="{{form.note}}" bindinput="onNote" maxlength="200"
-                placeholder="今天感觉如何？有什么想记录的～" auto-focus="{{noteExpanded}}"/>
+                placeholder="今天感觉如何？有什么想记录的～"/>
       <view class="note-foot"><text class="note-count">{{noteLen}}/200</text></view>
     </block>
     <view wx:elif="{{form.note}}" class="note-preview" bindtap="toggleNote">{{form.note}}</view>

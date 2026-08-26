@@ -194,6 +194,18 @@
   }
   .dur-chip.active { background: #34C759; color: #fff; font-weight: 600; }
 
+  /* 自定义时长步进器 */
+  .dur-custom { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .dur-custom-label { font-size: 11px; color: #8E8E93; }
+  .stepper { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .step-btn {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: #F0F0F3;
+    color: #34C759; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background .15s;
+  }
+  .step-btn:active { background: #E0EFE2; }
+  .step-val { min-width: 92px; text-align: center; font-size: 13px; font-weight: 600; color: #1C1C1E; }
+
   /* 备注：可展开的录入入口 */
   .note-head {
     display: flex; align-items: center; gap: 8px;
@@ -203,7 +215,7 @@
   .note-ico { font-size: 15px; }
   .note-title { font-size: 13px; font-weight: 600; color: #1C1C1E; }
   .note-action { margin-left: auto; font-size: 12px; color: #34C759; }
-  .note-area { margin-top: 10px; height: 88px; line-height: 1.5; }
+  .note-area { margin-top: 10px; height: 88px; line-height: 1.5; border: 1px solid #E1E1E6; }
   .note-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
   .note-count { font-size: 11px; color: #8E8E93; }
   .note-preview {
@@ -897,7 +909,13 @@ const App = {
         '<div class="field"><span class="label">时长</span>' +
         '<div class="dur-summary"><span class="dur-ico">⏱</span><span class="dur-value">' + formatDuration(f.durationSec) + '</span><span class="dur-max">最长 1 小时 30 分钟</span></div>' +
         '<div class="dur-chips">' + this.durationPresets.map((p) =>
-          '<span class="dur-chip ' + (f.durationSec === p.sec ? 'active' : '') + '" onclick="App.pickDuration(' + p.sec + ')">' + p.label + '</span>').join('') + '</div></div>' +
+          '<span class="dur-chip ' + (f.durationSec === p.sec ? 'active' : '') + '" onclick="App.pickDuration(' + p.sec + ')">' + p.label + '</span>').join('') + '</div>' +
+        '<div class="dur-custom"><span class="dur-custom-label">自定义（每分钟）</span>' +
+        '<div class="stepper">' +
+        '<button class="step-btn" type="button" onclick="App.stepDuration(-1)">−</button>' +
+        '<span class="step-val">' + formatDuration(f.durationSec) + '</span>' +
+        '<button class="step-btn" type="button" onclick="App.stepDuration(1)">＋</button>' +
+        '</div></div>' +
         '<div class="field"><span class="label">时间</span><div class="picker-row">' +
         '<input type="date" value="' + f.date + '" onchange="App.recordForm.date=this.value">' +
         '<input type="time" value="' + f.time + '" onchange="App.recordForm.time=this.value"></div></div>' +
@@ -917,6 +935,12 @@ const App = {
   renderRecordForm() { this.render(); },
   pickBristol(t) { this.recordForm.bristolType = t; this.render(); },
   pickDuration(sec) { this.recordForm.durationSec = sec; this.render(); },
+  stepDuration(d) {
+    let sec = this.recordForm.durationSec + d * 60; // 每分钟 ±1
+    sec = Math.max(0, Math.min(5400, sec));
+    this.recordForm.durationSec = sec;
+    this.render();
+  },
   toggleNote() { this.noteExpanded = !this.noteExpanded; this.render(); },
   durTextShort(sec) { return durText(sec); },
   toggleSymptom(t) {
