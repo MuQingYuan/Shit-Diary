@@ -29,12 +29,35 @@
 
   <view class="mask" wx:if="{{detail}}" bindtap="closeDetail">
     <view class="detail-panel" catchtap="noop">
-      <text class="detail-title">记录详情</text>
-      <view class="detail-row"><text class="k">时间</text><text class="v">{{detail.time}}</text></view>
-      <view class="detail-row"><text class="k">Bristol</text><text class="v">{{detail.bristol}}</text></view>
-      <view class="detail-row"><text class="k">时长</text><text class="v">{{detail.dur}}</text></view>
-      <view class="detail-row"><text class="k">症状</text><text class="v">{{detail.symptoms}}</text></view>
-      <view class="detail-row"><text class="k">备注</text><text class="v">{{detail.note}}</text></view>
+      <view class="detail-hero" style="background: {{detail.bristolColor}}14;">
+        <view class="hero-badge" style="background: {{detail.bristolColor}};">{{detail.bristolType}}</view>
+        <view class="hero-info">
+          <text class="hero-name">{{detail.bristolName}}</text>
+          <text class="hero-desc">{{detail.bristolDesc}}</text>
+        </view>
+      </view>
+      <text class="detail-when">{{detail.date}} {{detail.time}}</text>
+
+      <view class="detail-grid">
+        <view class="grid-cell"><text class="gc-k">时长</text><text class="gc-v">{{detail.dur}}</text></view>
+        <view class="grid-cell"><text class="gc-k">量</text><text class="gc-v">{{detail.amount}}</text></view>
+        <view class="grid-cell"><text class="gc-k">颜色</text><text class="gc-v">{{detail.color}}</text></view>
+        <view class="grid-cell"><text class="gc-k">心情</text><text class="gc-v">{{detail.mood}}</text></view>
+      </view>
+
+      <view class="detail-sec">
+        <text class="sec-title">症状</text>
+        <view class="sec-tags">
+          <text wx:if="{{detail.symptomTags.length === 0}}" class="sec-empty">无</text>
+          <text wx:for="{{detail.symptomTags}}" wx:key="*this" class="sec-tag">{{item}}</text>
+        </view>
+      </view>
+
+      <view class="detail-sec">
+        <text class="sec-title">备注</text>
+        <view class="sec-note"><text wx:if="{{!detail.note}}" class="sec-empty">无备注</text><text wx:else>{{detail.note}}</text></view>
+      </view>
+
       <button class="btn-del" hover-class="hv" bindtap="onDelete">删除这条记录</button>
       <button class="btn-close" hover-class="hv" bindtap="closeDetail">关闭</button>
     </view>

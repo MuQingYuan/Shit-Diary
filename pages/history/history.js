@@ -1,5 +1,5 @@
 const { pad, durText } = require('../../utils/format');
-const { BRISTOL } = require('../../utils/constants');
+const { BRISTOL, BRISTOL_COLORS } = require('../../utils/constants');
 
 Page({
   data: {
@@ -81,12 +81,19 @@ Page({
     const bristol = BRISTOL.find((b) => b.type === Number(item.bristolType));
     this.setData({
       detail: {
-        time: `${item.date} ${item.time || ''}`,
-        bristol: bristol ? bristol.name : '未知',
-        dur: durText(item.durationSec),
-        symptoms: (item.symptomTags || []).join('、') || '无',
-        note: item.note || '无',
         id: item._id,
+        date: item.date,
+        time: item.time || '',
+        bristolType: Number(item.bristolType),
+        bristolName: bristol ? bristol.name : '未知',
+        bristolDesc: bristol ? bristol.desc : '',
+        bristolColor: bristol ? (BRISTOL_COLORS[bristol.type] || '#34C759') : '#34C759',
+        dur: durText(item.durationSec),
+        amount: item.amount || '未记录',
+        color: item.color || '未记录',
+        mood: item.mood || '未记录',
+        symptomTags: item.symptomTags || [],
+        note: item.note || '',
       },
     });
   },
