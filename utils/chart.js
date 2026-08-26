@@ -102,8 +102,9 @@ function drawTrend(ctx, w, h, opt) {
   ctx.lineCap = 'round';
   ctx.stroke();
 
-  // 数值标签：点数少（≤7）全标；点多时仅标有记录的天，避免拥挤
+  // 数值标签：本周(≤7)每天全标；本月等密集场景隔一天标一个，避免拥挤
   const showAll = n <= 7;
+  const labelEvery = showAll ? 1 : 2; // 隔一天展示一个
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   for (let i = 0; i < n; i++) {
@@ -115,7 +116,8 @@ function drawTrend(ctx, w, h, opt) {
     ctx.lineWidth = 2;
     ctx.strokeStyle = color;
     ctx.stroke();
-    if (values[i] > 0) {
+    // 仅在「隔一天」位置标数值（本周点数少仍全标）
+    if (values[i] > 0 && (labelEvery === 1 || i % labelEvery === 0)) {
       ctx.fillStyle = '#1C1C1E';
       ctx.font = '10px sans-serif';
       ctx.fillText(String(values[i]), xAt(i), yAt(values[i]) - 8);

@@ -512,11 +512,9 @@ function drawTrendCanvas() {
 function renderStatsCharts() {
   const d = App.statsData(App.statsPeriod);
   App._trendCfg = { labels: d.bars.map((b) => b.day), values: d.bars.map((b) => b.count), tipLabels: d.bars.map((b) => b.tipLabel) };
-  // 默认高亮今天（超出范围则回到 0）
-  if (App.trendTipIndex == null || App.trendTipIndex >= d.bars.length) {
-    const ti = d.bars.findIndex((b) => b.date === todayStr());
-    App.trendTipIndex = ti >= 0 ? ti : 0;
-  }
+  // 每次渲染默认高亮今天（切换周期/页面时重置；点击查看某天走 drawTrendCanvas 单独更新，不会被覆盖）
+  const ti = d.bars.findIndex((b) => b.date === todayStr());
+  App.trendTipIndex = ti >= 0 ? ti : 0;
   drawTrendCanvas();
   const total = d.dist.reduce((s, b) => s + b.count, 0);
   const dom = d.dist.slice().sort((a, b) => b.count - a.count)[0];
