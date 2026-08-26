@@ -70,7 +70,7 @@
   }
   .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-  #page { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 4px 16px 20px; scrollbar-width: none; }
+  #page { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 20px; scrollbar-width: none; }
   #page::-webkit-scrollbar { display: none; }
 
   .card {
@@ -260,8 +260,16 @@
   .hist-list { padding-bottom: 8px; }
   .group-head {
     display: flex; align-items: center; justify-content: space-between;
-    margin: 0 4px 8px;
+    margin: 0 4px 8px; cursor: pointer;
   }
+  .group-head:active { opacity: .8; }
+  .group-right { display: flex; align-items: center; gap: 8px; }
+  .group-toggle {
+    width: 10px; height: 10px;
+    border-right: 2px solid #8E8E93; border-bottom: 2px solid #8E8E93;
+    transform: rotate(45deg); transition: transform .2s ease; margin-bottom: 3px;
+  }
+  .group-toggle.collapsed { transform: rotate(-135deg); }
   .group-date { font-size: 14px; font-weight: 600; color: #1C1C1E; }
   .group-count {
     font-size: 11px; color: #8E8E93; background: #E9E9EE;
@@ -705,6 +713,7 @@ const App = {
   recordForm: null,
   durationPresets: DURATION_PRESETS,
   historyYear: null,   // null = 全部；否则 'YYYY'
+  historyCollapsed: {}, // 收起的月份：{ 'YYYY-MM': true }
   noteExpanded: false,
 
   init() {
@@ -1210,22 +1219,28 @@ const App = {
     const yearBar = '<div class="hist-years">' + years.map((y) =>
       '<span class="hist-year ' + ((sel || '全部') === y ? 'on' : '') + '" onclick="App.setHistoryYear(\'' + (y === '全部' ? '' : y) + '\')">' + y + '</span>').join('') + '</div>';
 
-    const groupsHtml = filtered.map((g) =>
-      '<div class="list-group"><div class="group-head"><span class="group-date">' + g.label + '</span>' +
-      '<span class="group-count">' + g.items.length + ' 次</span></div>' +
-      g.items.map((r) =>
+    const groupsHtml = filtered.map((g) => {
+      const collapsed = this.historyCollapsed[g.key];
+      const rows = collapsed ? '' : g.items.map((r) =>
         '<div class="list-row" onclick="App.showDetail(\'' + r.id + '\')">' +
         '<span class="row-time">' + r.time + '</span>' +
         '<div class="row-body"><span class="row-bristol">' + r.bristolType + ' 型</span>' +
         '<span class="row-dur">' + durText(r.durationSec) + '</span></div>' +
-        '<span class="row-arrow">›</span></div>').join('') +
-      '</div>').join('');
+        '<span class="row-arrow">›</span></div>').join('');
+      return '<div class="list-group' + (collapsed ? ' collapsed' : '') + '">' +
+        '<div class="group-head" onclick="App.toggleHistoryGroup(\'' + g.key + '\')">' +
+        '<span class="group-date">' + g.label + '</span>' +
+        '<span class="group-right"><span class="group-count">' + g.items.length + ' 次</span>' +
+        '<span class="group-toggle' + (collapsed ? ' collapsed' : '') + '"></span></span></div>' +
+        rows + '</div>';
+    }).join('');
 
     return yearBar +
       '<div class="hist-total">共 ' + total + ' 条记录</div>' +
       '<div class="hist-list">' + groupsHtml + '<div class="list-bottom">没有更多了</div></div>';
   },
   setHistoryYear(y) { this.historyYear = y || null; this.render(); },
+  toggleHistoryGroup(key) { this.historyCollapsed[key] = !this.historyCollapsed[key]; this.render(); },
   showDetail(id) {
     const r = DB.records.find((x) => x.id === id);
     if (!r) return;

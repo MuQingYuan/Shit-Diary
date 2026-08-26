@@ -13,7 +13,7 @@
 /* 年份筛选条（常驻顶部） */
 .filter-bar {
   flex-shrink: 0;
-  padding: 20rpx 32rpx 16rpx;
+  padding: 0 32rpx 16rpx;
   background: #F2F2F7;
 }
 .year-scroll { white-space: nowrap; width: 100%; }
@@ -55,12 +55,29 @@
   box-sizing: border-box;
 }
 .group { margin-bottom: 28rpx; }
+.group.collapsed { margin-bottom: 8rpx; }
 .group-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin: 0 8rpx 14rpx;
 }
+.group-right {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.group-toggle {
+  width: 18rpx;
+  height: 18rpx;
+  border-right: 4rpx solid #8E8E93;
+  border-bottom: 4rpx solid #8E8E93;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  margin-left: 2rpx;
+  margin-bottom: 4rpx;
+}
+.group-toggle.collapsed { transform: rotate(-135deg); }
 .group-date {
   font-size: 26rpx;
   font-weight: 600;

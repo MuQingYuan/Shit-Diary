@@ -48,6 +48,7 @@ Page({
         year: y,
         mLabel: Number(mo) + '月',
         label: y + '年' + Number(mo) + '月',
+        collapsed: false,
         items: monthMap[m].map((r) => ({ ...r, durText: durText(r.durationSec) })),
       };
     });
@@ -81,6 +82,14 @@ Page({
       list: this.applyYear(this._allList, idx, this.data.years),
       total: this.applyYear(this._allList, idx, this.data.years).reduce((s, g) => s + g.items.length, 0),
     });
+  },
+
+  // 点击月份分组标题：展开 / 收起该月记录
+  toggleGroup(e) {
+    const gi = Number(e.currentTarget.dataset.gi);
+    if (!this.data.list[gi]) return;
+    const path = 'list[' + gi + '].collapsed';
+    this.setData({ [path]: !this.data.list[gi].collapsed });
   },
 
   openDetail(e) {
