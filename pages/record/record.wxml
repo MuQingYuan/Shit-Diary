@@ -14,8 +14,17 @@
   </view>
 
   <view class="field">
-    <text class="label">时长：{{form.durationSec}} 秒</text>
-    <slider min="0" max="1800" step="30" value="{{form.durationSec}}" bindchange="onDuration" show-value/>
+    <text class="label">时长</text>
+    <view class="dur-summary">
+      <text class="dur-ico">⏱</text>
+      <text class="dur-value">{{durLabel}}</text>
+      <text class="dur-max">最长 1 小时 30 分钟</text>
+    </view>
+    <view class="dur-chips">
+      <view wx:for="{{durationPresets}}" wx:key="sec"
+            class="dur-chip {{form.durationSec===item.sec?'active':''}}"
+            bindtap="onPickDuration" data-sec="{{item.sec}}">{{item.label}}</view>
+    </view>
   </view>
 
   <view class="field">
@@ -28,8 +37,17 @@
   </view>
 
   <view class="field">
-    <text class="label">备注</text>
-    <textarea value="{{form.note}}" bindinput="onNote" maxlength="200" placeholder="今天感觉如何？"/>
+    <view class="note-head {{noteExpanded?'open':''}}" bindtap="toggleNote">
+      <text class="note-ico">📝</text>
+      <text class="note-title">备注</text>
+      <text class="note-action">{{noteExpanded ? '收起' : (form.note ? '编辑' : '添加')}}</text>
+    </view>
+    <block wx:if="{{noteExpanded}}">
+      <textarea class="note-area" value="{{form.note}}" bindinput="onNote" maxlength="200"
+                placeholder="今天感觉如何？有什么想记录的～" auto-focus="{{noteExpanded}}"/>
+      <view class="note-foot"><text class="note-count">{{noteLen}}/200</text></view>
+    </block>
+    <view wx:elif="{{form.note}}" class="note-preview" bindtap="toggleNote">{{form.note}}</view>
   </view>
 
   <button class="submit btn-primary" bindtap="onSubmit">保存记录</button>

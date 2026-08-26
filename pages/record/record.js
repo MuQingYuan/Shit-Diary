@@ -2,6 +2,30 @@ const { call } = require('../../utils/cloud');
 const fmt = require('../../utils/format');
 const { BRISTOL, SYMPTOMS, COLORS } = require('../../utils/constants');
 
+// 时长上限：1 小时 30 分钟
+const MAX_DURATION = 5400;
+const DURATION_PRESETS = [
+  { sec: 120, label: '2 分钟' },
+  { sec: 300, label: '5 分钟' },
+  { sec: 600, label: '10 分钟' },
+  { sec: 900, label: '15 分钟' },
+  { sec: 1800, label: '30 分钟' },
+  { sec: 3600, label: '1 小时' },
+  { sec: 5400, label: '1 小时 30 分钟' },
+];
+
+function formatDuration(sec) {
+  if (!sec) return '未记录';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0 && m > 0) return h + ' 小时 ' + m + ' 分钟';
+  if (h > 0) return h + ' 小时';
+  if (m > 0 && s > 0) return m + ' 分 ' + s + ' 秒';
+  if (m > 0) return m + ' 分钟';
+  return s + ' 秒';
+}
+
 Page({
   data: {
     bristolList: BRISTOL.map((b) => ({ type: b.type, desc: b.desc })),
@@ -9,6 +33,8 @@ Page({
     colorOptions: COLORS,
     amountOptions: ['少', '中', '多'],
     moodOptions: ['轻松', '正常', '不适'],
+    durationPresets: DURATION_PRESETS,
+    maxDuration: MAX_DURATION,
     form: {
       date: '',
       time: '',
@@ -20,14 +46,21 @@ Page({
       mood: '正常',
       note: '',
     },
+    durLabel: '',
+    noteExpanded: false,
+    noteLen: 0,
     submitting: false,
   },
 
   onLoad() {
     const now = new Date();
+    const note = this.data.form.note;
     this.setData({
       'form.date': fmt.todayStr(now),
       'form.time': fmt.hm(now),
+      durLabel: formatDuration(this.data.form.durationSec),
+      noteExpanded: !!note,
+      noteLen: note.length,
     });
   },
 
@@ -36,7 +69,10 @@ Page({
   onPickBristol(e) {
     this.setData({ 'form.bristolType': Number(e.currentTarget.dataset.type) });
   },
-  onDuration(e) { this.setData({ 'form.durationSec': e.detail.value }); },
+  onPickDuration(e) {
+    const sec = Number(e.currentTarget.dataset.sec);
+    this.setData({ 'form.durationSec': sec, durLabel: formatDuration(sec) });
+  },
   onPickColor(e) {
     this.setData({ 'form.color': e.currentTarget.dataset.v });
   },
@@ -53,7 +89,13 @@ Page({
     i > -1 ? tags.splice(i, 1) : tags.push(v);
     this.setData({ 'form.symptomTags': tags });
   },
-  onNote(e) { this.setData({ 'form.note': e.detail.value }); },
+  toggleNote() {
+    this.setData({ noteExpanded: !this.data.noteExpanded });
+  },
+  onNote(e) {
+    const v = e.detail.value;
+    this.setData({ 'form.note': v, noteLen: v.length });
+  },
 
   async onSubmit() {
     if (this.data.submitting) return;
