@@ -42,7 +42,7 @@ Page({
       durationSec: 300,
       color: '',
       amount: '中',
-      symptomTags: [],
+      symptomTags: ['无'],
       mood: '正常',
       note: '',
     },
@@ -63,6 +63,22 @@ Page({
       noteExpanded: !!note,
       noteLen: note.length,
     });
+  },
+
+  // 复原为默认：Bristol=4 / 5分钟 / 当前时间 / 量=中 / 颜色=棕 / 症状=无 / 心情=正常
+  defaultForm() {
+    const now = new Date();
+    return {
+      date: fmt.todayStr(now),
+      time: fmt.hm(now),
+      bristolType: 4,
+      durationSec: 300,
+      color: '棕',
+      amount: '中',
+      symptomTags: ['无'],
+      mood: '正常',
+      note: '',
+    };
   },
 
   onDateChange(e) { this.setData({ 'form.date': e.detail.value }); },
@@ -91,9 +107,18 @@ Page({
   },
   onToggleSymptom(e) {
     const v = e.currentTarget.dataset.v;
-    const tags = this.data.form.symptomTags.slice();
-    const i = tags.indexOf(v);
-    i > -1 ? tags.splice(i, 1) : tags.push(v);
+    let tags = this.data.form.symptomTags.slice();
+    if (v === '无') {
+      // 选「无」即清空其它症状；再次点「无」则取消
+      tags = tags.includes('无') ? [] : ['无'];
+    } else {
+      const i = tags.indexOf(v);
+      if (i > -1) tags.splice(i, 1);
+      else tags.push(v);
+      // 选了真实症状则移除「无」
+      const j = tags.indexOf('无');
+      if (j > -1) tags.splice(j, 1);
+    }
     this.setData({ 'form.symptomTags': tags });
   },
   toggleNote() {
@@ -124,6 +149,14 @@ Page({
       wx.hideLoading();
       wx.setStorageSync('recorded_' + f.date, true);
       wx.showToast({ title: '已记录', icon: 'success' });
+      // 提交后复原所有选择为默认
+      this.setData({
+        form: this.defaultForm(),
+        durLabel: formatDuration(300),
+        durMinInput: '5',
+        noteExpanded: false,
+        noteLen: 0,
+      });
       setTimeout(() => wx.switchTab({ url: '/pages/index/index' }), 800);
     } catch (err) {
       wx.hideLoading();

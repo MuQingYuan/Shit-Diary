@@ -413,7 +413,7 @@ const BRISTOL = [
   { type: 6, name: '6型 · 糊状', desc: '糊状，接近腹泻' },
   { type: 7, name: '7型 · 水样', desc: '完全水样，腹泻' }
 ];
-const SYMPTOMS = ['费力', '出血', '疼痛', '腹胀', '未排净', '紧急'];
+const SYMPTOMS = ['无', '费力', '出血', '疼痛', '腹胀', '未排净', '紧急'];
 const AMOUNTS = ['少', '中', '多'];
 const MOODS = ['轻松', '正常', '不适'];
 const COLORS = ['棕', '深棕', '浅棕', '绿', '黑', '红', '其他'];
@@ -665,8 +665,8 @@ const App = {
     loadDB();
     this.recordForm = {
       date: todayStr(), time: fmtHM(new Date()),
-      bristolType: 4, durationSec: 300, color: '', amount: '中',
-      symptomTags: [], mood: '正常', note: ''
+      bristolType: 4, durationSec: 300, color: '棕', amount: '中',
+      symptomTags: ['无'], mood: '正常', note: ''
     };
     this.renderNav();
     this.renderTabbar();
@@ -967,8 +967,17 @@ const App = {
   toggleNote() { this.noteExpanded = !this.noteExpanded; this.render(); },
   durTextShort(sec) { return durText(sec); },
   toggleSymptom(t) {
-    const i = this.recordForm.symptomTags.indexOf(t);
-    i > -1 ? this.recordForm.symptomTags.splice(i, 1) : this.recordForm.symptomTags.push(t);
+    let tags = this.recordForm.symptomTags;
+    if (t === '无') {
+      // 选「无」即清空其它症状；再次点「无」则取消
+      this.recordForm.symptomTags = tags.includes('无') ? [] : ['无'];
+    } else {
+      const i = tags.indexOf(t);
+      if (i > -1) tags.splice(i, 1); else tags.push(t);
+      // 选了真实症状则移除「无」
+      const j = tags.indexOf('无');
+      if (j > -1) tags.splice(j, 1);
+    }
     this.render();
   },
   pickMood(m) { this.recordForm.mood = m; this.render(); },
@@ -986,6 +995,13 @@ const App = {
     DB.users.streakDays = calcStreak();
     saveDB();
     toast('已记录，数据已保存');
+    // 提交后复原所有选择为默认（Bristol=4 / 5分钟 / 当前时间 / 量=中 / 颜色=棕 / 症状=无 / 心情=正常）
+    this.recordForm = {
+      date: todayStr(), time: fmtHM(new Date()),
+      bristolType: 4, durationSec: 300, color: '棕', amount: '中',
+      symptomTags: ['无'], mood: '正常', note: ''
+    };
+    this.noteExpanded = false;
     this.go('stats');
   },
 
