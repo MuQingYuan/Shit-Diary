@@ -26,11 +26,11 @@
             bindtap="onPickDuration" data-sec="{{item.sec}}">{{item.label}}</view>
     </view>
     <view class="dur-custom">
-      <text class="dur-custom-label">自定义（每分钟 ±1）</text>
-      <view class="stepper">
-        <view class="step-btn" bindtap="onStepDuration" data-d="-1">−</view>
-        <text class="step-val">{{durLabel}}</text>
-        <view class="step-btn" bindtap="onStepDuration" data-d="1">＋</view>
+      <text class="dur-custom-label">自定义（分钟，最长 90）</text>
+      <view class="dur-input-row">
+        <input class="dur-input" type="number" maxlength="3" value="{{durMinInput}}"
+               bindinput="onDurInput" placeholder="如 12"/>
+        <text class="dur-input-unit">分钟</text>
       </view>
     </view>
   </view>

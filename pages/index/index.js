@@ -26,6 +26,7 @@ Page({
     bristolTypes: [1, 2, 3, 4, 5, 6, 7],
     quickForm: { bristolType: 4, durationSec: 300 },
     quickDurText: '5 分钟',
+    quickDurMin: '5',
   },
 
   onLoad() {
@@ -84,6 +85,7 @@ Page({
     this.setData({
       showQuick: true,
       quickDurText: this.durText(f.durationSec),
+      quickDurMin: String(Math.round(f.durationSec / 60)),
     });
   },
 
@@ -99,14 +101,16 @@ Page({
     this.setData({ 'quickForm.bristolType': type });
   },
 
-  quickSetDuration(e) {
-    const sec = e.detail.value;
-    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec) });
+  quickSetDurInput(e) {
+    let min = parseInt(e.detail.value, 10);
+    if (isNaN(min)) min = 0;
+    min = Math.max(0, Math.min(90, min)); // 0~90 分钟（最长 1 小时 30 分钟）
+    this.setData({ 'quickForm.durationSec': min * 60, quickDurText: this.durText(min * 60), quickDurMin: String(min) });
   },
 
   quickPreset(e) {
     const sec = Number(e.currentTarget.dataset.sec);
-    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec) });
+    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec), quickDurMin: String(Math.round(sec / 60)) });
   },
 
   // 面板确认 → 提交云函数

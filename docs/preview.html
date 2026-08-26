@@ -194,17 +194,15 @@
   }
   .dur-chip.active { background: #34C759; color: #fff; font-weight: 600; }
 
-  /* 自定义时长步进器 */
+  /* 自定义时长：直接输入分钟数 */
   .dur-custom { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
   .dur-custom-label { font-size: 11px; color: #8E8E93; }
-  .stepper { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-  .step-btn {
-    width: 32px; height: 32px; border-radius: 50%; border: none; background: #F0F0F3;
-    color: #34C759; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: background .15s;
+  .dur-input-row { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .dur-input {
+    width: 92px; height: 32px; padding: 0 10px; box-sizing: border-box;
+    border: 1px solid #E1E1E6; border-radius: 10px; font-size: 13px; text-align: center; color: #1C1C1E;
   }
-  .step-btn:active { background: #E0EFE2; }
-  .step-val { min-width: 92px; text-align: center; font-size: 13px; font-weight: 600; color: #1C1C1E; }
+  .dur-input-unit { font-size: 12px; color: #555; }
 
   /* 备注：可展开的录入入口 */
   .note-head {
@@ -328,7 +326,12 @@
     display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s;
   }
   .bristol-mini.active { border-color: #34C759; background: #EAF6EC; }
-  .qp-slider { width: 100%; margin: 6px 0; }
+  .qp-dur-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .qp-dur-input {
+    flex: 1; height: 36px; padding: 0 12px; box-sizing: border-box;
+    border: 1px solid #E1E1E6; border-radius: 10px; font-size: 14px; text-align: center; color: #1C1C1E;
+  }
+  .qp-dur-unit { font-size: 13px; color: #555; }
   .qp-presets { display: flex; gap: 8px; }
   .preset {
     flex: 1; padding: 9px 0; border-radius: 10px;
@@ -382,11 +385,14 @@
       <div class="qp-label">Bristol 类型</div>
       <div class="qp-bristol" id="quickBristol"></div>
       <div class="qp-label">时长 <span class="qp-dur" id="quickDur">5 分钟</span></div>
-      <input class="qp-slider" type="range" min="30" max="1800" step="30" value="300" oninput="App.quickDuration(+this.value)">
+      <div class="qp-dur-row"><input class="qp-dur-input" id="quickDurMin" type="number" min="0" max="90" value="5" placeholder="如 12" oninput="App.quickSetDurMin(this.value)" onblur="App.quickClampDur(this)"><span class="qp-dur-unit">分钟</span></div>
       <div class="qp-presets">
         <button class="preset" data-s="120" onclick="App.quickPreset(120)">2 分钟</button>
         <button class="preset" data-s="300" onclick="App.quickPreset(300)">5 分钟</button>
         <button class="preset" data-s="600" onclick="App.quickPreset(600)">10 分钟</button>
+        <button class="preset" data-s="1800" onclick="App.quickPreset(1800)">30 分钟</button>
+        <button class="preset" data-s="3600" onclick="App.quickPreset(3600)">1 小时</button>
+        <button class="preset" data-s="5400" onclick="App.quickPreset(5400)">1.5 小时</button>
       </div>
       <div class="qp-actions">
         <button class="qp-btn qp-cancel" onclick="App.closeQuick()">取消</button>
@@ -835,7 +841,10 @@ const App = {
     document.getElementById('quickMask').classList.add('show');
     this.renderQuickBristol();
     document.getElementById('quickDur').textContent = this.quickDurText(this.quickForm.durationSec);
-    document.querySelector('#quickMask .qp-slider').value = this.quickForm.durationSec;
+    const inp = document.getElementById('quickDurMin');
+    if (inp) inp.value = Math.round(this.quickForm.durationSec / 60);
+    document.querySelectorAll('#quickMask .preset').forEach((p) =>
+      p.classList.toggle('on', +p.dataset.s === this.quickForm.durationSec));
   },
   closeQuick() {
     document.getElementById('quickMask').classList.remove('show');
@@ -851,16 +860,27 @@ const App = {
     this.quickForm.bristolType = type;
     this.renderQuickBristol();
   },
-  quickDuration(sec) {
-    this.quickForm.durationSec = sec;
-    document.getElementById('quickDur').textContent = this.quickDurText(sec);
-    document.querySelectorAll('#quickMask .preset').forEach((p) =>
-      p.classList.toggle('on', +p.dataset.s === sec));
+  quickSetDurMin(v) {
+    let min = parseInt(v, 10); if (isNaN(min)) min = 0;
+    min = Math.max(0, Math.min(90, min));
+    this.quickForm.durationSec = min * 60;
+    const el = document.getElementById('quickDur');
+    if (el) el.textContent = this.quickDurText(this.quickForm.durationSec);
+  },
+  quickClampDur(inp) {
+    let min = parseInt(inp.value, 10); if (isNaN(min)) min = 0;
+    min = Math.max(0, Math.min(90, min));
+    this.quickForm.durationSec = min * 60;
+    inp.value = min;
+    const el = document.getElementById('quickDur');
+    if (el) el.textContent = this.quickDurText(this.quickForm.durationSec);
   },
   quickPreset(sec) {
     this.quickForm.durationSec = sec;
-    document.getElementById('quickDur').textContent = this.quickDurText(sec);
-    document.querySelector('#quickMask .qp-slider').value = sec;
+    const dur = document.getElementById('quickDur');
+    if (dur) dur.textContent = this.quickDurText(sec);
+    const inp = document.getElementById('quickDurMin');
+    if (inp) inp.value = Math.round(sec / 60);
     document.querySelectorAll('#quickMask .preset').forEach((p) =>
       p.classList.toggle('on', +p.dataset.s === sec));
   },
@@ -907,15 +927,11 @@ const App = {
         '<span class="label">Bristol 类型</span>' +
         '<div class="bristol-grid">' + bristol + '</div></div>' +
         '<div class="field"><span class="label">时长</span>' +
-        '<div class="dur-summary"><span class="dur-ico">⏱</span><span class="dur-value">' + formatDuration(f.durationSec) + '</span><span class="dur-max">最长 1 小时 30 分钟</span></div>' +
+        '<div class="dur-summary"><span class="dur-ico">⏱</span><span class="dur-value" id="durValue">' + formatDuration(f.durationSec) + '</span><span class="dur-max">最长 1 小时 30 分钟</span></div>' +
         '<div class="dur-chips">' + this.durationPresets.map((p) =>
           '<span class="dur-chip ' + (f.durationSec === p.sec ? 'active' : '') + '" onclick="App.pickDuration(' + p.sec + ')">' + p.label + '</span>').join('') + '</div>' +
-        '<div class="dur-custom"><span class="dur-custom-label">自定义（每分钟）</span>' +
-        '<div class="stepper">' +
-        '<button class="step-btn" type="button" onclick="App.stepDuration(-1)">−</button>' +
-        '<span class="step-val">' + formatDuration(f.durationSec) + '</span>' +
-        '<button class="step-btn" type="button" onclick="App.stepDuration(1)">＋</button>' +
-        '</div></div>' +
+        '<div class="dur-custom"><span class="dur-custom-label">自定义（分钟，最长 90）</span>' +
+        '<div class="dur-input-row"><input class="dur-input" id="durMin" type="number" min="0" max="90" value="' + Math.round(f.durationSec / 60) + '" placeholder="如 12" oninput="App.setDurMin(this.value)" onblur="App.clampDurMin(this)"><span class="dur-input-unit">分钟</span></div></div>' +
         '<div class="field"><span class="label">时间</span><div class="picker-row">' +
         '<input type="date" value="' + f.date + '" onchange="App.recordForm.date=this.value">' +
         '<input type="time" value="' + f.time + '" onchange="App.recordForm.time=this.value"></div></div>' +
@@ -935,11 +951,20 @@ const App = {
   renderRecordForm() { this.render(); },
   pickBristol(t) { this.recordForm.bristolType = t; this.render(); },
   pickDuration(sec) { this.recordForm.durationSec = sec; this.render(); },
-  stepDuration(d) {
-    let sec = this.recordForm.durationSec + d * 60; // 每分钟 ±1
-    sec = Math.max(0, Math.min(5400, sec));
-    this.recordForm.durationSec = sec;
-    this.render();
+  setDurMin(v) {
+    let min = parseInt(v, 10); if (isNaN(min)) min = 0;
+    min = Math.max(0, Math.min(90, min));
+    this.recordForm.durationSec = min * 60;
+    const el = document.getElementById('durValue');
+    if (el) el.textContent = formatDuration(this.recordForm.durationSec);
+  },
+  clampDurMin(inp) {
+    let min = parseInt(inp.value, 10); if (isNaN(min)) min = 0;
+    min = Math.max(0, Math.min(90, min));
+    this.recordForm.durationSec = min * 60;
+    inp.value = min;
+    const el = document.getElementById('durValue');
+    if (el) el.textContent = formatDuration(this.recordForm.durationSec);
   },
   toggleNote() { this.noteExpanded = !this.noteExpanded; this.render(); },
   durTextShort(sec) { return durText(sec); },

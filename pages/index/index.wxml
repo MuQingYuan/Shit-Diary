@@ -104,13 +104,18 @@
       </view>
 
       <view class="qp-label">时长 <text class="qp-dur">{{quickDurText}}</text></view>
-      <slider class="qp-slider" min="0" max="1800" step="30" value="{{quickForm.durationSec}}"
-              activeColor="#34C759" block-color="#34C759" block-size="22"
-              bindchanging="quickSetDuration" bindchange="quickSetDuration"/>
+      <view class="qp-dur-row">
+        <input class="qp-dur-input" type="number" maxlength="3" value="{{quickDurMin}}"
+               bindinput="quickSetDurInput" placeholder="分钟"/>
+        <text class="qp-dur-unit">分钟</text>
+      </view>
       <view class="qp-presets">
         <view class="preset {{quickForm.durationSec === 120 ? 'on' : ''}}" data-sec="120" bindtap="quickPreset">2 分钟</view>
         <view class="preset {{quickForm.durationSec === 300 ? 'on' : ''}}" data-sec="300" bindtap="quickPreset">5 分钟</view>
         <view class="preset {{quickForm.durationSec === 600 ? 'on' : ''}}" data-sec="600" bindtap="quickPreset">10 分钟</view>
+        <view class="preset {{quickForm.durationSec === 1800 ? 'on' : ''}}" data-sec="1800" bindtap="quickPreset">30 分钟</view>
+        <view class="preset {{quickForm.durationSec === 3600 ? 'on' : ''}}" data-sec="3600" bindtap="quickPreset">1 小时</view>
+        <view class="preset {{quickForm.durationSec === 5400 ? 'on' : ''}}" data-sec="5400" bindtap="quickPreset">1.5 小时</view>
       </view>
 
       <view class="qp-actions">
