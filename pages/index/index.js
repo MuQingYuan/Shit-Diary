@@ -24,7 +24,7 @@ Page({
     // 半屏快捷面板
     showQuick: false,
     bristolTypes: [1, 2, 3, 4, 5, 6, 7],
-    quickForm: { bristolType: 4, durationSec: 300 },
+    quickForm: { bristolType: 4, durationSec: 300, color: '棕', symptomTags: ['无'] },
     quickDurText: '5 分钟',
     quickDurMin: '5',
   },
@@ -126,7 +126,8 @@ Page({
       time,
       durationSec: this.data.quickForm.durationSec,
       bristolType: this.data.quickForm.bristolType,
-      symptomTags: [],
+      color: this.data.quickForm.color,
+      symptomTags: this.data.quickForm.symptomTags,
       note: '',
     })
       .then(() => {
@@ -134,7 +135,13 @@ Page({
         wx.showToast({ title: '已记录', icon: 'success' });
         if (wx.vibrateShort) wx.vibrateShort({ type: 'light' });
         wx.setStorageSync('recorded_' + date, true);
-        this.setData({ showQuick: false });
+        // 提交后复原快捷面板默认值：Bristol=4 / 5 分钟 / 颜色=棕 / 症状=无
+        this.setData({
+          showQuick: false,
+          quickForm: { bristolType: 4, durationSec: 300, color: '棕', symptomTags: ['无'] },
+          quickDurText: '5 分钟',
+          quickDurMin: '5',
+        });
         return this.loadHome(false);
       })
       .catch((err) => {

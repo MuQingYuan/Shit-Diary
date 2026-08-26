@@ -851,7 +851,7 @@ const App = {
   },
 
   // ===== 半屏快捷记录面板 =====
-  quickForm: { bristolType: 4, durationSec: 300 },
+  quickForm: { bristolType: 4, durationSec: 300, color: '棕', symptomTags: ['无'] },
 
   openQuick() {
     document.getElementById('quickMask').classList.add('show');
@@ -906,11 +906,13 @@ const App = {
     DB.records.push({
       id: 'q' + Date.now(), date: fmtDate(now), time: fmtHM(now), timestamp: now.getTime(),
       bristolType: this.quickForm.bristolType, durationSec: this.quickForm.durationSec,
-      color: '', amount: '中', symptomTags: [], mood: '正常', note: ''
+      color: this.quickForm.color, amount: '中', symptomTags: this.quickForm.symptomTags, mood: '正常', note: ''
     });
     DB.users.totalRecords = DB.records.length;
     DB.users.streakDays = calcStreak();
     saveDB();
+    // 提交后复原快捷面板默认值：Bristol=4 / 5 分钟 / 颜色=棕 / 症状=无
+    this.quickForm = { bristolType: 4, durationSec: 300, color: '棕', symptomTags: ['无'] };
     this.closeQuick();
     toast('已记录 💩');
     this.render();
