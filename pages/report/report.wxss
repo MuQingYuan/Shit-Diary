@@ -29,31 +29,33 @@
 /* 评分头卡 */
 .hero {
   display: flex; flex-direction: column; align-items: center;
-  background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%);
+  background: linear-gradient(165deg, #3DD06B 0%, #2BA84B 100%);
   color: #fff;
-  padding: 36rpx 32rpx 40rpx;
+  padding: 44rpx 32rpx 46rpx;
 }
 .hero-range { font-size: 24rpx; opacity: 0.92; letter-spacing: 0.5px; }
-.hero-grade { font-size: 64rpx; margin: 18rpx 0 16rpx; line-height: 1; }
+.hero-grade { font-size: 60rpx; margin: 16rpx 0 22rpx; line-height: 1; }
+/* 得分环形：conic-gradient 进度（白→浅渐变描边）+ 绿色内盘承载分数 */
 .ring {
-  width: 176rpx; height: 176rpx; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
+  position: relative;
+  width: 208rpx; height: 208rpx; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.12);
 }
 .ring-in {
-  width: 146rpx; height: 146rpx; border-radius: 50%;
+  width: 172rpx; height: 172rpx; border-radius: 50%;
   background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   color: #fff;
-  box-shadow: inset 0 0 0 4rpx rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 0 4rpx rgba(255, 255, 255, 0.28), 0 6rpx 16rpx rgba(0, 0, 0, 0.12);
 }
-.hero-score { font-size: 64rpx; font-weight: 700; line-height: 1; }
-.hero-score-unit { font-size: 26rpx; font-weight: 400; }
-.hero-score-cap { font-size: 22rpx; opacity: 0.9; margin-top: 4rpx; }
-.hero-title { font-size: 34rpx; font-weight: 600; margin-top: 22rpx; }
+.hero-score { font-size: 66rpx; font-weight: 700; line-height: 1; letter-spacing: -1rpx; }
+.hero-score-unit { font-size: 24rpx; font-weight: 400; }
+.hero-score-cap { font-size: 22rpx; opacity: 0.9; margin-top: 8rpx; }
+.hero-title { font-size: 36rpx; font-weight: 600; margin-top: 28rpx; }
 .hero-comment {
-  margin-top: 16rpx; font-size: 24rpx; line-height: 1.6; text-align: center;
-  background: rgba(255, 255, 255, 0.18); padding: 16rpx 22rpx; border-radius: 18rpx;
+  margin-top: 18rpx; font-size: 24rpx; line-height: 1.6; text-align: center;
+  background: rgba(255, 255, 255, 0.16); padding: 16rpx 22rpx; border-radius: 18rpx;
   max-width: 100%;
 }
 
@@ -149,11 +151,11 @@
   background: rgba(18, 18, 26, 0.78);
   display: flex; align-items: center; justify-content: center;
   padding: 56rpx 40rpx calc(env(safe-area-inset-bottom) + 40rpx);
-  box-sizing: border-box; overflow-y: auto;
+  box-sizing: border-box; overflow: hidden;
   animation: maskFade 0.28s ease both;
 }
 .share-card-box {
-  position: relative; width: 680rpx; margin: auto;
+  position: relative; width: auto; margin: auto;
   display: flex; flex-direction: column; align-items: center;
   transform-origin: center center;
   animation: cardReveal 0.56s cubic-bezier(0.18, 0.89, 0.32, 1.12) both;
@@ -165,23 +167,23 @@
   100% { opacity: 1; transform: scale(1) translateY(0) rotateZ(0); }
 }
 .share-card-canvas {
-  width: 680rpx; height: 1540rpx; border-radius: 30rpx; background: #fff;
+  width: auto; height: auto; border-radius: 30rpx; background: #fff;
   box-shadow: 0 24rpx 70rpx rgba(0, 0, 0, 0.45);
   display: block;
 }
 /* 顶部高光扫过（抽卡闪光感） */
 .share-shine {
-  position: absolute; top: 0; left: -40rpx; z-index: 3;
-  width: 120rpx; height: 100%;
+  position: absolute; top: 0; left: -30%; z-index: 3;
+  width: 30%; height: 100%;
   background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
   transform: skewX(-18deg);
   animation: shine 0.9s ease 0.28s both;
   pointer-events: none; border-radius: 30rpx;
 }
 @keyframes shine {
-  0% { left: -40rpx; opacity: 0; }
+  0% { left: -30%; opacity: 0; }
   20% { opacity: 1; }
-  100% { left: 680rpx; opacity: 0; }
+  100% { left: 120%; opacity: 0; }
 }
 .share-close {
   position: absolute; top: -20rpx; right: -20rpx; z-index: 4;

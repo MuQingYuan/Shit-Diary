@@ -11,6 +11,8 @@ Page({
     shareReady: false,   // 分享卡是否已生成
     generating: false,   // 是否正在生成分享卡
     overlayOpen: false,  // 分享卡是否以全屏覆盖层展示
+    cardW: 0,            // 分享卡显示宽（px，单屏适配后计算）
+    cardH: 0,            // 分享卡显示高（px，= cardW * 2）
   },
 
   onLoad() { this.load(); },
@@ -99,7 +101,8 @@ Page({
     this.setData({ generating: true });
     // 先展示「生成中」状态，稍作停顿再真正绘制，避免一闪而过显得突兀
     setTimeout(() => {
-      this.setData({ generating: false, shareReady: true, overlayOpen: true }, () => {
+      const sz = this.fitCardSize();
+      this.setData({ generating: false, shareReady: true, overlayOpen: true, cardW: sz.w, cardH: sz.h }, () => {
         this.drawCard();
       });
     }, 420);
@@ -108,7 +111,25 @@ Page({
   // 重新打开已生成的分享卡（全屏覆盖层）
   openOverlay() {
     if (!this.data.shareReady || this.data.overlayOpen) return;
-    this.setData({ overlayOpen: true }, () => this.drawCard());
+    const sz = this.fitCardSize();
+    this.setData({ overlayOpen: true, cardW: sz.w, cardH: sz.h }, () => this.drawCard());
+  },
+
+  // 计算分享卡显示尺寸，使其完整落在单屏内（固定宽高比 0.5，h = 2w）
+  fitCardSize() {
+    let sw = 375, sh = 667;
+    try {
+      const info = wx.getSystemInfoSync();
+      sw = info.windowWidth || sw;
+      sh = info.windowHeight || sh;
+    } catch (e) {}
+    const m = Math.round(Math.min(sw, sh) * 0.06);       // 四周留白
+    const savePx = Math.round((80 + 20) * (sw / 750));    // 保存按钮(80rpx)+间距(20rpx) 折算为 px
+    const availW = sw - 2 * m;
+    const availH = sh - 2 * m - savePx;
+    let w = Math.min(availW, availH / 2);
+    w = Math.max(220, Math.min(w, 360));
+    return { w: Math.round(w), h: Math.round(w * 2) };
   },
 
   // 关闭全屏覆盖层（保留已生成状态，可再次查看）

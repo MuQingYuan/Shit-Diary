@@ -307,7 +307,7 @@ Object.assign(App, {
       '<div class="card hero rp-hero">' +
         '<div class="hero-range">' + r.rangeLabel + ' · 本周</div>' +
         '<div class="hero-grade">' + r.grade.emoji + '</div>' +
-        '<div class="ring"><div class="ring-in">' +
+        '<div class="ring" style="background:conic-gradient(rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.62) ' + r.score + '%, rgba(255,255,255,0.20) ' + r.score + '% 100%)"><div class="ring-in">' +
           '<div class="hero-score">' + r.score + '<span class="hero-score-unit">分</span></div>' +
           '<div class="hero-score-cap">肠道得分</div>' +
         '</div></div>' +
@@ -339,13 +339,25 @@ Object.assign(App, {
   },
   // 全屏覆盖层（游戏抽卡式展示）
   shareOverlayHtml() {
+    const sz = this.fitCardSize();
     return '<div class="share-mask" onclick="App.closeOverlay()">' +
-      '<div class="share-card-box" onclick="event.stopPropagation()">' +
+      '<div class="share-card-box" style="width:' + sz.w + 'px" onclick="event.stopPropagation()">' +
         '<div class="share-close" onclick="App.closeOverlay()">×</div>' +
         '<div class="share-shine"></div>' +
-        '<canvas id="shareCanvas" class="share-card-canvas"></canvas>' +
+        '<canvas id="shareCanvas" class="share-card-canvas" style="width:' + sz.w + 'px;height:' + sz.h + 'px"></canvas>' +
         '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button>' +
       '</div></div>';
+  },
+  // 计算分享卡显示尺寸，使其完整落在单屏内（固定宽高比 0.5，h = 2w）
+  fitCardSize() {
+    const iw = window.innerWidth || 375, ih = window.innerHeight || 667;
+    const m = Math.round(Math.min(iw, ih) * 0.06);
+    const savePx = 56;
+    const availW = iw - 2 * m;
+    const availH = ih - 2 * m - savePx;
+    let w = Math.min(availW, availH / 2);
+    w = Math.max(220, Math.min(w, 380));
+    return { w: Math.round(w), h: Math.round(w * 2) };
   },
   // 点击生成：先显示 loading，短暂停顿后再以全屏覆盖层展示并绘制
   generateShare() {

@@ -11,7 +11,7 @@
     <view class="card hero">
       <view class="hero-range">{{report.rangeLabel}} · 本周</view>
       <view class="hero-grade">{{report.grade.emoji}}</view>
-      <view class="ring">
+      <view class="ring" style="background: conic-gradient(rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.62) {{report.score}}%, rgba(255,255,255,0.20) {{report.score}}% 100%)">
         <view class="ring-in">
           <view class="hero-score">{{report.score}}<text class="hero-score-unit">分</text></view>
           <view class="hero-score-cap">肠道得分</view>
@@ -122,7 +122,7 @@
       <view class="share-card-box" catchtap="stopMask">
         <view class="share-close" bindtap="closeOverlay">×</view>
         <view class="share-shine"></view>
-        <canvas type="2d" id="shareCanvas" class="share-card-canvas"></canvas>
+        <canvas type="2d" id="shareCanvas" class="share-card-canvas" style="width:{{cardW}}px;height:{{cardH}}px"></canvas>
         <button class="btn-save" hover-class="btn-hv" loading="{{saving}}" bindtap="saveCard">
           {{saving ? '保存中…' : '保存图片到相册'}}
         </button>
