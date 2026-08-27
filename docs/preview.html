@@ -87,7 +87,8 @@
   }
   .card:active { transform: scale(.985); opacity: .9; }
   .card.flat { cursor: default; }
-  .card-title { font-size: 15px; font-weight: 600; }
+  .card-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; }
+  .sec-ico { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: #F0F0F3; margin-right: 7px; font-size: 12px; flex-shrink: 0; }
   .card-sub { font-size: 12px; color: #8E8E93; margin-top: 4px; }
   .stat-row { display: flex; gap: 12px; }
   .stat { flex: 1; position: relative; }
@@ -136,7 +137,7 @@
   .tip:last-child { margin-bottom: 0; }
   .tip-dot { color: #34C759; font-weight: 700; margin-right: 6px; line-height: 1.6; }
   .tip-text { flex: 1; font-size: 12px; color: #1C1C1E; line-height: 1.6; }
-  .share-canvas { width: 100%; height: 900px; border-radius: 12px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+  .share-canvas { width: 100%; height: 1080px; border-radius: 12px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
   .btn-save { margin-top: 12px; width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 11px 0; cursor: pointer; }
   .btn-save:active { opacity: 0.85; }
 
@@ -679,12 +680,22 @@ function wrapText(ctx, text, x, y, maxW, lh, maxLines) {
   if (line) ctx.fillText(line, x, y);
   return y + lh;
 }
+const GRADE_PALETTE = {
+  '肠道王者': { color: '#F5A623', soft: '#FFF3E0', grad: ['#FFC06E', '#F0972B'] },
+  '顺滑宗师': { color: '#9B59B6', soft: '#F5ECFB', grad: ['#B57ED1', '#884EA0'] },
+  '规律达人': { color: '#34C759', soft: '#EAF6EC', grad: ['#4FD86E', '#28A447'] },
+  '渐入佳境': { color: '#15B8A6', soft: '#E3F7F4', grad: ['#3FD3C2', '#0E9384'] },
+  '蓄力新兵': { color: '#3D9BE9', soft: '#E8F3FC', grad: ['#67B4F0', '#2C7FC6'] },
+};
 function gradeOf(score) {
-  if (score >= 90) return { title: '肠道王者', emoji: '👑' };
-  if (score >= 80) return { title: '顺滑宗师', emoji: '🌟' };
-  if (score >= 70) return { title: '规律达人', emoji: '💪' };
-  if (score >= 60) return { title: '渐入佳境', emoji: '🌱' };
-  return { title: '蓄力新兵', emoji: '🐣' };
+  let title, emoji;
+  if (score >= 90) { title = '肠道王者'; emoji = '👑'; }
+  else if (score >= 80) { title = '顺滑宗师'; emoji = '🌟'; }
+  else if (score >= 70) { title = '规律达人'; emoji = '💪'; }
+  else if (score >= 60) { title = '渐入佳境'; emoji = '🌱'; }
+  else { title = '蓄力新兵'; emoji = '🐣'; }
+  const p = GRADE_PALETTE[title];
+  return { title, emoji, color: p.color, soft: p.soft, grad: p.grad };
 }
 function scoreComment(r) {
   const topSym = r.symptomTop.length ? r.symptomTop[0].name : '';
@@ -748,48 +759,70 @@ function buildWeekReport(records, opts) {
   const rangeLabel = (first.getMonth() + 1) + '/' + first.getDate() + ' - ' + (last.getMonth() + 1) + '/' + last.getDate();
   return { rangeLabel, daysRecorded, total, streak, score, grade, avgDurSec, avgDurText: durText(avgDurSec), idealPct, bristolDist, bestType, bestTypeName: bestType ? bristolName(bestType) : '—', symptomTop, moodAgg, weekDots, comment, tips };
 }
+function sectionTitle(ctx, text, x, y, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundRect(ctx, x, y - 15, 6, 19, 3); ctx.fill();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#1C1C1E'; ctx.font = '600 18px sans-serif'; ctx.fillText(text, x + 16, y);
+  ctx.restore();
+}
 function drawReportCard(ctx, w, h, r) {
+  const g = r.grade;
   ctx.clearRect(0, 0, w, h);
   const R = 28;
   roundRect(ctx, 0, 0, w, h, R); ctx.fillStyle = '#FFFFFF'; ctx.fill();
-  const PAD = 36;
-  const grad = ctx.createLinearGradient(0, 0, w, 200);
-  grad.addColorStop(0, '#34C759'); grad.addColorStop(1, '#2BA84B');
-  ctx.save(); roundRect(ctx, 0, 0, w, h, R); ctx.clip(); ctx.fillStyle = grad; ctx.fillRect(0, 0, w, 150); ctx.restore();
+  const PAD = 32;
+  // 顶部渐变头（段位配色）
+  ctx.save(); roundRect(ctx, 0, 0, w, h, R); ctx.clip();
+  const grad = ctx.createLinearGradient(0, 0, w, 230);
+  grad.addColorStop(0, g.grad[0]); grad.addColorStop(1, g.grad[1]);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, w, 220); ctx.restore();
+  // 头文字
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 30px sans-serif'; ctx.fillText('我的肠道周报', PAD, 64);
-  ctx.font = '400 20px sans-serif'; ctx.globalAlpha = 0.9; ctx.fillText(r.rangeLabel + ' · 本周', PAD, 96); ctx.globalAlpha = 1;
-  ctx.font = '44px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(r.grade.emoji, w - PAD, 96);
-  const cx = w / 2, cy = 250, rad = 78;
-  ctx.lineWidth = 18; ctx.strokeStyle = '#ECECEF'; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.stroke();
-  const start = -Math.PI / 2, ang = (r.score / 100) * Math.PI * 2;
-  ctx.strokeStyle = '#34C759'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(cx, cy, rad, start, start + ang); ctx.stroke(); ctx.lineCap = 'butt';
-  ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.font = '700 46px sans-serif'; ctx.fillText(String(r.score), cx, cy + 6);
-  ctx.fillStyle = '#8E8E93'; ctx.font = '400 18px sans-serif'; ctx.fillText('肠道健康分', cx, cy + 34);
-  ctx.fillStyle = '#34C759'; ctx.font = '700 22px sans-serif'; ctx.fillText(r.grade.title, cx, cy + 70);
-  const chips = [{ k: '打卡', v: r.daysRecorded + '/7' }, { k: '平均时长', v: r.avgDurText }, { k: '理想占比', v: r.idealPct + '%' }];
+  ctx.font = '700 28px sans-serif'; ctx.fillText('我的肠道周报', PAD, 54);
+  ctx.font = '400 17px sans-serif'; ctx.globalAlpha = 0.9; ctx.fillText(r.rangeLabel + ' · 本周', PAD, 84); ctx.globalAlpha = 1;
+  ctx.textAlign = 'right';
+  ctx.font = '48px sans-serif'; ctx.fillText(g.emoji, w - PAD, 92);
+  ctx.font = '700 20px sans-serif'; ctx.fillText(g.title, w - PAD, 126);
+  ctx.font = '400 13px sans-serif'; ctx.globalAlpha = 0.88; ctx.fillText('本周段位', w - PAD, 146); ctx.globalAlpha = 1;
+  // 评分圆环
+  const cx = w / 2, cy = 300, rad = 70;
+  ctx.lineWidth = 16; ctx.strokeStyle = '#ECECEF'; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.stroke();
+  const ang = (r.score / 100) * Math.PI * 2;
+  ctx.strokeStyle = g.color; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(cx, cy, rad, -Math.PI / 2, -Math.PI / 2 + ang); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.font = '700 46px sans-serif'; ctx.fillText(String(r.score), cx, cy + 2);
+  ctx.fillStyle = '#8E8E93'; ctx.font = '400 16px sans-serif'; ctx.fillText('肠道健康分', cx, cy + 30);
+  // 关键指标
+  let y = 388;
+  const chips = [{ k: '打卡天数', v: r.daysRecorded + '/7' }, { k: '平均时长', v: r.avgDurText }, { k: '理想占比', v: r.idealPct + '%' }];
   const cw = (w - PAD * 2 - 24) / 3;
   chips.forEach((c, i) => {
-    const x = PAD + i * (cw + 12), y = 360;
-    roundRect(ctx, x, y, cw, 84, 18); ctx.fillStyle = '#F4FAF5'; ctx.fill();
-    ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = '700 26px sans-serif'; ctx.fillText(c.v, x + cw / 2, y + 42);
-    ctx.fillStyle = '#8E8E93'; ctx.font = '400 16px sans-serif'; ctx.fillText(c.k, x + cw / 2, y + 66);
+    const x = PAD + i * (cw + 12);
+    roundRect(ctx, x, y, cw, 84, 16); ctx.fillStyle = g.soft; ctx.fill();
+    ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = '700 25px sans-serif'; ctx.fillText(c.v, x + cw / 2, y + 42);
+    ctx.fillStyle = '#8E8E93'; ctx.font = '400 15px sans-serif'; ctx.fillText(c.k, x + cw / 2, y + 66);
   });
-  let y = 480; ctx.textAlign = 'left'; ctx.fillStyle = '#1C1C1E'; ctx.font = '600 20px sans-serif'; ctx.fillText('一周打卡', PAD, y);
-  y += 18; const dw = (w - PAD * 2) / 7;
+  // 一周打卡
+  y += 84 + 30; sectionTitle(ctx, '📅 一周打卡', PAD, y, g.color); y += 30;
+  const dw = (w - PAD * 2) / 7;
   r.weekDots.forEach((d, i) => {
-    const dx = PAD + i * dw + dw / 2, dy = y + 30;
-    ctx.beginPath(); ctx.arc(dx, dy, 18, 0, Math.PI * 2); ctx.fillStyle = d.recorded ? '#EAF6EC' : '#F2F2F7'; ctx.fill();
-    ctx.font = (d.recorded ? '16px' : '18px') + ' sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.emoji, dx, dy + 1);
-    ctx.fillStyle = d.recorded ? '#34C759' : '#C7C7CC'; ctx.font = '400 13px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(d.label, dx, dy + 36);
+    const dx = PAD + i * dw + dw / 2, dy = y + 22;
+    ctx.beginPath(); ctx.arc(dx, dy, 17, 0, Math.PI * 2); ctx.fillStyle = d.recorded ? g.soft : '#F2F2F7'; ctx.fill();
+    ctx.font = (d.recorded ? '15px' : '17px') + ' sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.emoji, dx, dy + 1);
+    ctx.fillStyle = d.recorded ? g.color : '#C7C7CC'; ctx.font = '400 12px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(d.label, dx, dy + 34);
   });
-  y += 86; roundRect(ctx, PAD, y, w - PAD * 2, 92, 18); ctx.fillStyle = '#FFF7E6'; ctx.fill();
-  ctx.fillStyle = '#B6791F'; ctx.font = '600 17px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText('本周点评', PAD + 20, y + 32);
-  ctx.fillStyle = '#5A4A2A'; ctx.font = '400 17px sans-serif'; wrapText(ctx, r.comment, PAD + 20, y + 58, w - PAD * 2 - 40, 24, 2);
-  y += 112; ctx.fillStyle = '#1C1C1E'; ctx.font = '600 20px sans-serif'; ctx.fillText('肠道小贴士', PAD, y);
-  y += 24; ctx.font = '400 16px sans-serif';
-  r.tips.forEach((t) => { y = wrapText(ctx, '· ' + t, PAD, y, w - PAD * 2, 23, 2) + 6; });
-  ctx.fillStyle = '#C7C7CC'; ctx.font = '400 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('嗯嗯日记 · 数据来自你自己的记录', w / 2, h - 26);
+  // 本周点评气泡
+  y += 72; const bubbleH = 92;
+  roundRect(ctx, PAD, y, w - PAD * 2, bubbleH, 16); ctx.fillStyle = g.soft; ctx.fill();
+  ctx.fillStyle = g.color; ctx.font = '600 15px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText('本周点评', PAD + 18, y + 28);
+  ctx.fillStyle = '#3A3A3A'; ctx.font = '400 15px sans-serif'; wrapText(ctx, r.comment, PAD + 18, y + 52, w - PAD * 2 - 36, 21, 2);
+  // 肠道小贴士
+  y += bubbleH + 26; sectionTitle(ctx, '💡 肠道小贴士', PAD, y, g.color); y += 28;
+  ctx.font = '400 14px sans-serif';
+  r.tips.forEach((t) => { y = wrapText(ctx, '· ' + t, PAD, y, w - PAD * 2, 21, 2) + 8; });
+  // 页脚
+  ctx.fillStyle = '#C7C7CC'; ctx.font = '400 13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('嗯嗯日记 · 数据来自你自己的记录', w / 2, h - 22);
 }
 
 // 取 canvas 并按 dpr 缩放后绘制（浏览器版）
@@ -1362,12 +1395,12 @@ const App = {
         '<div class="metric"><div class="metric-num">' + r.idealPct + '%</div><div class="metric-label">理想占比</div></div>' +
         '<div class="metric"><div class="metric-num">' + r.streak + '<span class="metric-unit">天</span></div><div class="metric-label">连续打卡</div></div>' +
       '</div></div>' +
-      '<div class="card"><div class="card-title">便型偏好</div>' + distHtml + '</div>' +
-      '<div class="cols"><div class="card col"><div class="card-title">本周小状况</div>' + symHtml + '</div>' +
-        '<div class="card col"><div class="card-title">心情分布</div>' + moodHtml + '</div></div>' +
-      '<div class="card"><div class="card-title">一周打卡</div><div class="week">' + weekHtml + '</div></div>' +
-      '<div class="card tips"><div class="card-title">肠道小贴士</div>' + tipHtml + '</div>' +
-      '<div class="card share"><div class="card-title">本周分享卡</div>' +
+      '<div class="card"><div class="card-title"><span class="sec-ico">💩</span>便型偏好</div>' + distHtml + '</div>' +
+      '<div class="cols"><div class="card col"><div class="card-title"><span class="sec-ico">💢</span>本周小状况</div>' + symHtml + '</div>' +
+        '<div class="card col"><div class="card-title"><span class="sec-ico">😊</span>心情分布</div>' + moodHtml + '</div></div>' +
+      '<div class="card"><div class="card-title"><span class="sec-ico">📅</span>一周打卡</div><div class="week">' + weekHtml + '</div></div>' +
+      '<div class="card tips"><div class="card-title"><span class="sec-ico">💡</span>肠道小贴士</div>' + tipHtml + '</div>' +
+      '<div class="card share"><div class="card-title"><span class="sec-ico">🖼️</span>本周分享卡</div>' +
         '<canvas id="shareCanvas" class="share-canvas"></canvas>' +
         '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button></div>';
   },

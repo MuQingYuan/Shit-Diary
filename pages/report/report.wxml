@@ -45,7 +45,7 @@
 
     <!-- 便型偏好 -->
     <view class="card">
-      <view class="card-title">便型偏好</view>
+      <view class="card-title"><text class="sec-ico">💩</text>便型偏好</view>
       <view wx:if="{{report.bristolDist.length}}" class="dist">
         <view class="dist-row" wx:for="{{report.bristolDist}}" wx:key="type">
           <view class="dot" style="background:{{item.color}}"></view>
@@ -60,7 +60,7 @@
     <!-- 症状 & 心情 -->
     <view class="cols">
       <view class="card col">
-        <view class="card-title">本周小状况</view>
+        <view class="card-title"><text class="sec-ico">💢</text>本周小状况</view>
         <view wx:if="{{report.symptomTop.length}}">
           <view class="tag-row" wx:for="{{report.symptomTop}}" wx:key="name">
             <text class="tag">{{item.name}}</text>
@@ -70,7 +70,7 @@
         <view wx:else class="empty small">无异常，状态轻松 👍</view>
       </view>
       <view class="card col">
-        <view class="card-title">心情分布</view>
+        <view class="card-title"><text class="sec-ico">😊</text>心情分布</view>
         <view wx:if="{{report.moodAgg.length}}">
           <view class="tag-row" wx:for="{{report.moodAgg}}" wx:key="name">
             <text class="tag">{{item.name}}</text>
@@ -83,7 +83,7 @@
 
     <!-- 一周打卡日历 -->
     <view class="card">
-      <view class="card-title">一周打卡</view>
+      <view class="card-title"><text class="sec-ico">📅</text>一周打卡</view>
       <view class="week">
         <view class="wday {{item.recorded ? 'on' : ''}}" wx:for="{{report.weekDots}}" wx:key="date">
           <text class="wemoji">{{item.emoji}}</text>
@@ -94,7 +94,7 @@
 
     <!-- 健康贴士 -->
     <view class="card tips">
-      <view class="card-title">肠道小贴士</view>
+      <view class="card-title"><text class="sec-ico">💡</text>肠道小贴士</view>
       <view class="tip" wx:for="{{report.tips}}" wx:key="*this">
         <text class="tip-dot">·</text>
         <text class="tip-text">{{item}}</text>
@@ -103,7 +103,7 @@
 
     <!-- 分享卡 -->
     <view class="card share">
-      <view class="card-title">本周分享卡</view>
+      <view class="card-title"><text class="sec-ico">🖼️</text>本周分享卡</view>
       <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
       <button class="btn-save" hover-class="btn-hv" loading="{{saving}}" bindtap="saveCard">
         {{saving ? '生成中…' : '保存图片到相册'}}

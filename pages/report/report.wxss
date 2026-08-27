@@ -21,7 +21,8 @@
   background: #fff; border-radius: 28rpx; padding: 30rpx;
   margin-bottom: 20rpx;
 }
-.card-title { font-size: 30rpx; font-weight: 600; margin-bottom: 22rpx; color: #1C1C1E; }
+.card-title { font-size: 30rpx; font-weight: 600; margin-bottom: 22rpx; color: #1C1C1E; display: flex; align-items: center; }
+.sec-ico { display: inline-flex; align-items: center; justify-content: center; width: 44rpx; height: 44rpx; border-radius: 14rpx; background: #F0F0F3; margin-right: 14rpx; font-size: 24rpx; flex-shrink: 0; }
 .empty { text-align: center; font-size: 24rpx; color: #8E8E93; padding: 28rpx 0; }
 .empty.small { padding: 16rpx 0; }
 
@@ -112,7 +113,7 @@
 
 /* 分享卡 */
 .share-canvas {
-  width: 100%; height: 1800rpx; border-radius: 24rpx; background: #fff;
+  width: 100%; height: 2160rpx; border-radius: 24rpx; background: #fff;
   box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.06);
 }
 .btn-save {
