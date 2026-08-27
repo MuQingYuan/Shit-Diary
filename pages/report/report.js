@@ -5,7 +5,7 @@ const pad = (n) => (n < 10 ? '0' + n : '' + n);
 
 Page({
   data: {
-    loading: true,
+    state: 'loading', // loading | error | done
     error: '',
     report: null,
     saving: false,
@@ -31,26 +31,33 @@ Page({
   },
 
   load() {
-    this.setData({ loading: true, error: '' });
+    this.setData({ state: 'loading', error: '' });
     const weekDays = this.currentWeekDays();
     const start = new Date(weekDays[0]); start.setHours(0, 0, 0, 0);
     const end = new Date(weekDays[6]); end.setHours(23, 59, 59, 999);
     const range = { start: start.getTime(), end: end.getTime() };
 
-    const db = wx.cloud.database();
-    const recP = db.collection('records')
-      .where({ timestamp: db.command.gte(range.start).and(db.command.lte(range.end)) })
-      .orderBy('timestamp', 'desc').limit(500).get()
-      .catch(() => ({ data: [] }));
-    const homeP = call('getHomeData').catch(() => null);
+    let recP, homeP;
+    try {
+      const db = wx.cloud.database();
+      recP = db.collection('records')
+        .where({ timestamp: db.command.gte(range.start).and(db.command.lte(range.end)) })
+        .orderBy('timestamp', 'desc').limit(500).get()
+        .catch(() => ({ data: [] }));
+      homeP = call('getHomeData').catch(() => null);
+    } catch (e) {
+      // 云环境未初始化等同步异常：降级为空数据，保证页面可渲染
+      recP = Promise.resolve({ data: [] });
+      homeP = Promise.resolve(null);
+    }
 
     return Promise.all([recP, homeP]).then((res) => {
-      const records = res[0].data || [];
-      const streak = (res[1] && res[1].data && res[1].data.streak) || 0;
+      const records = (res[0] && res[0].data) || [];
+      const streak = (res[1] && res[1].streak) || 0;
       const report = buildWeekReport(records, { weekDays, streak });
-      this.setData({ loading: false, report }, () => this.drawCard());
+      this.setData({ state: 'done', report }, () => this.drawCard());
     }).catch(() => {
-      this.setData({ loading: false, error: '周报生成失败，请确认云环境已配置后下拉重试' });
+      this.setData({ state: 'error', error: '周报生成失败，请确认云环境已配置后点击重试' });
     });
   },
 

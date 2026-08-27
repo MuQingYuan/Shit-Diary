@@ -1,12 +1,12 @@
 <view class="page">
-  <view wx:if="{{error}}" class="error-bar">
+  <view wx:if="{{state === 'loading'}}" class="loading">正在生成你的肠道周报…</view>
+
+  <view wx:if="{{state === 'error'}}" class="error-bar">
     <text class="error-text">{{error}}</text>
     <text class="error-retry" bindtap="load">重试</text>
   </view>
 
-  <view wx:if="{{loading}}" class="loading">正在生成你的肠道周报…</view>
-
-  <block wx:elif="{{report}}">
+  <block wx:if="{{state === 'done'}}">
     <!-- 评分头卡 -->
     <view class="card hero">
       <view class="hero-range">{{report.rangeLabel}} · 本周</view>
