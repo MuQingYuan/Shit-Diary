@@ -11,28 +11,35 @@
     <view class="card hero">
       <view class="hero-range">{{report.rangeLabel}} · 本周</view>
       <view class="hero-grade">{{report.grade.emoji}}</view>
-      <view class="hero-score">{{report.score}}<text class="hero-score-unit"> 分</text></view>
+      <view class="ring">
+        <view class="ring-in">
+          <view class="hero-score">{{report.score}}<text class="hero-score-unit">分</text></view>
+          <view class="hero-score-cap">肠道得分</view>
+        </view>
+      </view>
       <view class="hero-title">{{report.grade.title}}</view>
       <view class="hero-comment">{{report.comment}}</view>
     </view>
 
     <!-- 关键指标 -->
-    <view class="metrics">
-      <view class="metric">
-        <text class="metric-num">{{report.daysRecorded}}<text class="metric-unit">/7</text></text>
-        <text class="metric-label">打卡天数</text>
-      </view>
-      <view class="metric">
-        <text class="metric-num">{{report.avgDurText}}</text>
-        <text class="metric-label">平均时长</text>
-      </view>
-      <view class="metric">
-        <text class="metric-num">{{report.idealPct}}%</text>
-        <text class="metric-label">理想占比</text>
-      </view>
-      <view class="metric">
-        <text class="metric-num">{{report.streak}}<text class="metric-unit"> 天</text></text>
-        <text class="metric-label">连续打卡</text>
+    <view class="card metrics-card">
+      <view class="metrics">
+        <view class="metric">
+          <text class="metric-num">{{report.daysRecorded}}<text class="metric-unit">/7</text></text>
+          <text class="metric-label">打卡天数</text>
+        </view>
+        <view class="metric">
+          <text class="metric-num">{{report.avgDurText}}</text>
+          <text class="metric-label">平均时长</text>
+        </view>
+        <view class="metric">
+          <text class="metric-num">{{report.idealPct}}%</text>
+          <text class="metric-label">理想占比</text>
+        </view>
+        <view class="metric">
+          <text class="metric-num">{{report.streak}}<text class="metric-unit">天</text></text>
+          <text class="metric-label">连续打卡</text>
+        </view>
       </view>
     </view>
 

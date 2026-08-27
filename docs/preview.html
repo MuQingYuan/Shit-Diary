@@ -43,6 +43,7 @@
   .sb-icons { display: flex; gap: 5px; align-items: center; font-size: 11px; }
 
   .navbar {
+    position: relative;
     background: #F2F2F7;
     padding: 8px 18px 12px;
     display: flex;
@@ -50,11 +51,18 @@
     align-items: center;
     flex-shrink: 0;
   }
-  .nav-left { display: flex; align-items: center; gap: 8px; }
+  .nav-left { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; }
   .nav-back { font-size: 26px; color: #34C759; background: none; border: none; padding: 2px 8px 2px 0; font-weight: 600; cursor: pointer; }
   .nav-title { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
   .nav-date { font-size: 12px; color: #8E8E93; margin-top: 2px; }
-  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .nav-actions { position: relative; z-index: 1; display: flex; gap: 10px; align-items: center; }
+  /* 有返回按钮 / 子页 / tab 页：标题水平居中 */
+  .navbar.centered .nav-title {
+    position: absolute; left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 100%; text-align: center;
+    pointer-events: none; z-index: 0;
+  }
   .circle-btn {
     width: 40px; height: 40px; border-radius: 50%;
     background: #fff; border: none;
@@ -88,34 +96,39 @@
   .stat-num .unit { font-size: 12px; color: #8E8E93; font-weight: 400; }
   .stat-arrow { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: #C7C7CC; font-size: 22px; }
   /* ===== 肠道周报 ===== */
-  .rp-hero { display: flex; flex-direction: column; align-items: center; background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%); color: #fff; }
-  .hero-range { font-size: 12px; opacity: 0.9; }
-  .hero-grade { font-size: 36px; margin: 8px 0 2px; }
-  .hero-score { font-size: 40px; font-weight: 700; line-height: 1; }
-  .hero-score-unit { font-size: 16px; font-weight: 400; }
-  .hero-title { font-size: 17px; font-weight: 600; margin-top: 5px; }
-  .hero-comment { margin-top: 9px; font-size: 12px; line-height: 1.6; text-align: center; background: rgba(255,255,255,0.18); padding: 8px 10px; border-radius: 9px; }
-  .metrics { display: flex; gap: 6px; margin-bottom: 12px; }
-  .metric { flex: 1; background: #fff; border-radius: 14px; padding: 12px 0; display: flex; flex-direction: column; align-items: center; }
+  .rp-hero { display: flex; flex-direction: column; align-items: center; background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%); color: #fff; padding: 18px 16px 20px; }
+  .hero-range { font-size: 12px; opacity: 0.92; letter-spacing: 0.5px; }
+  .hero-grade { font-size: 32px; margin: 9px 0 8px; line-height: 1; }
+  .ring { width: 88px; height: 88px; border-radius: 50%; background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; }
+  .ring-in { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25); }
+  .hero-score { font-size: 30px; font-weight: 700; line-height: 1; }
+  .hero-score-unit { font-size: 13px; font-weight: 400; }
+  .hero-score-cap { font-size: 11px; opacity: 0.9; margin-top: 2px; }
+  .hero-title { font-size: 17px; font-weight: 600; margin-top: 11px; }
+  .hero-comment { margin-top: 8px; font-size: 12px; line-height: 1.6; text-align: center; background: rgba(255,255,255,0.18); padding: 8px 10px; border-radius: 9px; }
+  .metrics-card { padding: 4px 0; }
+  .metrics { display: flex; }
+  .metric { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; padding: 12px 0; }
+  .metric:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 12px; bottom: 12px; width: 1px; background: #ECECEF; }
   .metric-num { font-size: 19px; font-weight: 700; }
   .metric-unit { font-size: 11px; color: #8E8E93; font-weight: 400; }
-  .metric-label { margin-top: 3px; font-size: 11px; color: #8E8E93; }
-  .dist-row { display: flex; align-items: center; margin-bottom: 9px; }
+  .metric-label { margin-top: 4px; font-size: 11px; color: #8E8E93; }
+  .dist-row { display: flex; align-items: center; margin-bottom: 10px; }
   .dist-row:last-child { margin-bottom: 0; }
   .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-right: 8px; }
-  .dist-name { width: 90px; font-size: 12px; color: #1C1C1E; flex-shrink: 0; }
+  .dist-name { width: 88px; font-size: 12px; color: #1C1C1E; flex-shrink: 0; }
   .dist-bar { flex: 1; height: 8px; background: #F0F0F3; border-radius: 4px; overflow: hidden; }
   .dist-fill { height: 100%; border-radius: 4px; }
-  .dist-pct { width: 36px; text-align: right; font-size: 11px; color: #8E8E93; flex-shrink: 0; }
+  .dist-pct { width: 36px; text-align: right; font-size: 11px; color: #8E8E93; flex-shrink: 0; margin-left: 6px; }
   .cols { display: flex; gap: 12px; }
   .col { flex: 1; }
-  .tag-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .tag-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 4px; }
   .tag-row:last-child { margin-bottom: 0; }
-  .tag { font-size: 12px; color: #1C1C1E; background: #F0F0F3; padding: 3px 9px; border-radius: 999px; }
-  .tag-count { font-size: 11px; color: #8E8E93; }
+  .tag { font-size: 12px; color: #1C1C1E; background: #F0F0F3; padding: 4px 9px; border-radius: 999px; flex-shrink: 0; }
+  .tag-count { font-size: 11px; color: #8E8E93; flex-shrink: 0; }
   .week { display: flex; justify-content: space-between; }
-  .wday { width: 36px; height: 48px; border-radius: 10px; background: #F2F2F7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
-  .wday.on { background: #EAF6EC; }
+  .wday { width: 38px; height: 52px; border-radius: 10px; background: #F2F2F7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid transparent; }
+  .wday.on { background: #EAF6EC; border-color: rgba(52,199,89,0.35); }
   .wemoji { font-size: 15px; line-height: 1; }
   .wlabel { font-size: 10px; color: #C7C7CC; }
   .wday.on .wlabel { color: #34C759; }
@@ -939,6 +952,8 @@ const App = {
     const nav = document.getElementById('navbar');
     const page = this.currentPage();
     const sub = this.stack.length > 0;
+    const centered = page !== 'home';
+    nav.className = 'navbar' + (centered ? ' centered' : '');
     if (sub) {
       const titles = { history: '历史记录', remind: '提醒设置', guide: '新手引导', report: '肠道周报' };
       nav.innerHTML = '<div class="nav-left"><button class="nav-back" onclick="App.back()">‹ 返回</button></div>' +
@@ -1334,16 +1349,19 @@ const App = {
       '<div class="card hero rp-hero">' +
         '<div class="hero-range">' + r.rangeLabel + ' · 本周</div>' +
         '<div class="hero-grade">' + r.grade.emoji + '</div>' +
-        '<div class="hero-score">' + r.score + '<span class="hero-score-unit"> 分</span></div>' +
+        '<div class="ring"><div class="ring-in">' +
+          '<div class="hero-score">' + r.score + '<span class="hero-score-unit">分</span></div>' +
+          '<div class="hero-score-cap">肠道得分</div>' +
+        '</div></div>' +
         '<div class="hero-title">' + r.grade.title + '</div>' +
         '<div class="hero-comment">' + r.comment + '</div>' +
       '</div>' +
-      '<div class="metrics">' +
+      '<div class="card metrics-card"><div class="metrics">' +
         '<div class="metric"><div class="metric-num">' + r.daysRecorded + '<span class="metric-unit">/7</span></div><div class="metric-label">打卡天数</div></div>' +
         '<div class="metric"><div class="metric-num">' + r.avgDurText + '</div><div class="metric-label">平均时长</div></div>' +
         '<div class="metric"><div class="metric-num">' + r.idealPct + '%</div><div class="metric-label">理想占比</div></div>' +
-        '<div class="metric"><div class="metric-num">' + r.streak + '<span class="metric-unit"> 天</span></div><div class="metric-label">连续打卡</div></div>' +
-      '</div>' +
+        '<div class="metric"><div class="metric-num">' + r.streak + '<span class="metric-unit">天</span></div><div class="metric-label">连续打卡</div></div>' +
+      '</div></div>' +
       '<div class="card"><div class="card-title">便型偏好</div>' + distHtml + '</div>' +
       '<div class="cols"><div class="card col"><div class="card-title">本周小状况</div>' + symHtml + '</div>' +
         '<div class="card col"><div class="card-title">心情分布</div>' + moodHtml + '</div></div>' +
