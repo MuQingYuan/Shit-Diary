@@ -9,6 +9,8 @@ Page({
     error: '',
     report: null,
     saving: false,
+    shareReady: false,   // 分享卡是否已生成
+    generating: false,   // 是否正在生成分享卡
   },
 
   onLoad() { this.load(); },
@@ -42,7 +44,7 @@ Page({
     try { cloudReady = !!(wx.cloud && wx.cloud.database && wx.cloud.database()); } catch (e) { cloudReady = false; }
 
     const renderEmpty = () => {
-      this.setData({ state: 'done', report: buildWeekReport([], { weekDays, streak: 0 }) }, () => this.drawCard());
+      this.setData({ state: 'done', report: buildWeekReport([], { weekDays, streak: 0 }) });
     };
 
     if (!cloudReady) {
@@ -75,21 +77,21 @@ Page({
       const records = (res && res.records) || [];
       const streak = (res && res.streak) || 0;
       const report = buildWeekReport(records, { weekDays, streak });
-      this.setData({ state: 'done', report }, () => this.drawCard());
+      this.setData({ state: 'done', report });
     }).catch(() => {
       // 极端兜底：任何异常都渲染空态，保证页面永远有内容、不白屏
       renderEmpty();
     });
   },
 
-  // 绘制分享卡到 canvas
-  drawCard() {
+  // 绘制分享卡到 canvas（done 为绘制完成回调）
+  drawCard(done) {
     const report = this.data.report;
-    if (!report) return;
+    if (!report) { if (done) done(); return; }
     try {
       const q = wx.createSelectorQuery();
       q.select('#shareCanvas').fields({ node: true, size: true }).exec((res) => {
-        if (!res || !res[0] || !res[0].node) return;
+        if (!res || !res[0] || !res[0].node) { if (done) done(); return; }
         const canvas = res[0].node;
         const ctx = canvas.getContext('2d');
         let dpr = 2;
@@ -98,11 +100,28 @@ Page({
         canvas.height = res[0].height * dpr;
         ctx.scale(dpr, dpr);
         drawReportCard(ctx, res[0].width, res[0].height, report);
+        if (done) done();
       });
     } catch (e) {
       // 绘制失败不影响页面内容展示
       console.warn('drawReportCard failed', e);
+      if (done) done();
     }
+  },
+
+  // 点击「生成周报分享卡」后才绘制分享卡；过程带 loading + 淡入，体验更顺滑
+  generateShare() {
+    if (this.data.generating || this.data.shareReady) return;
+    this.setData({ generating: true });
+    // 先展示「生成中」状态，稍作停顿再真正绘制，避免一闪而过显得突兀
+    setTimeout(() => {
+      this.setData({ generating: false, shareReady: true }, () => {
+        this.drawCard(() => {
+          // 绘制完成后平滑滚动到分享卡位置
+          wx.pageScrollTo({ selector: '#shareCanvas', duration: 320 });
+        });
+      });
+    }, 420);
   },
 
   // 保存分享卡到相册

@@ -140,6 +140,14 @@
   .share-canvas { width: 100%; height: 770px; border-radius: 12px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
   .btn-save { margin-top: 12px; width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 11px 0; cursor: pointer; }
   .btn-save:active { opacity: 0.85; }
+  .btn-gen { width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 13px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-gen-ico { font-size: 16px; }
+  .gen-loading { display: flex; flex-direction: column; align-items: center; padding: 22px 0; }
+  .spinner { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(52,199,89,0.22); border-top-color: #34C759; animation: spin 0.8s linear infinite; }
+  .gen-loading-text { margin-top: 9px; font-size: 12px; color: #8E8E93; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .share-fade { animation: fadeUp 0.42s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 
   .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
   .hero-icon {
@@ -941,6 +949,8 @@ const App = {
   historyYear: null,   // null = 全部；否则 'YYYY'
   historyCollapsed: {}, // 收起的月份：{ 'YYYY-MM': true }
   noteExpanded: false,
+  shareReady: false,   // 分享卡是否已生成
+  generating: false,   // 是否正在生成分享卡
 
   init() {
     loadDB();
@@ -1037,8 +1047,10 @@ const App = {
 
   afterRender(page) {
     if (page === 'report') {
-      const r = this.reportData();
-      drawCanvas2D('shareCanvas', (ctx, w, h) => drawReportCard(ctx, w, h, r));
+      if (this.shareReady) {
+        const r = this.reportData();
+        drawCanvas2D('shareCanvas', (ctx, w, h) => drawReportCard(ctx, w, h, r));
+      }
     }
     if (page === 'stats') {
       renderStatsCharts();
@@ -1404,9 +1416,32 @@ const App = {
         '<div class="card col"><div class="card-title"><span class="sec-ico">😊</span>心情分布</div>' + moodHtml + '</div></div>' +
       '<div class="card"><div class="card-title"><span class="sec-ico">📅</span>一周打卡</div><div class="week">' + weekHtml + '</div></div>' +
       '<div class="card tips"><div class="card-title"><span class="sec-ico">💡</span>肠道小贴士</div>' + tipHtml + '</div>' +
-      '<div class="card share"><div class="card-title"><span class="sec-ico">🖼️</span>本周分享卡</div>' +
-        '<canvas id="shareCanvas" class="share-canvas"></canvas>' +
-        '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button></div>';
+      this.shareBlockHtml();
+  },
+  // 分享卡按需生成：未生成→按钮；生成中→loading；已生成→卡片
+  shareBlockHtml() {
+    if (!this.shareReady) {
+      if (this.generating) {
+        return '<div class="gen-loading"><div class="spinner"></div><div class="gen-loading-text">正在生成专属分享卡…</div></div>';
+      }
+      return '<button class="btn-gen" onclick="App.generateShare()"><span class="btn-gen-ico">🖼️</span>生成周报分享卡</button>';
+    }
+    return '<div class="card share share-fade"><div class="card-title"><span class="sec-ico">🖼️</span>本周分享卡</div>' +
+      '<canvas id="shareCanvas" class="share-canvas"></canvas>' +
+      '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button></div>';
+  },
+  // 点击生成：先显示 loading，短暂停顿后再绘制并淡入，体验顺滑
+  generateShare() {
+    if (this.shareReady || this.generating) return;
+    this.generating = true;
+    this.render();
+    setTimeout(() => {
+      this.generating = false;
+      this.shareReady = true;
+      this.render();
+      const page = document.getElementById('page');
+      if (page) page.scrollTop = page.scrollHeight;
+    }, 480);
   },
   saveReportCard() {
     const el = document.getElementById('shareCanvas');
