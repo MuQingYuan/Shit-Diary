@@ -87,6 +87,45 @@
   .stat-num { font-size: 26px; font-weight: 700; margin-top: 4px; }
   .stat-num .unit { font-size: 12px; color: #8E8E93; font-weight: 400; }
   .stat-arrow { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: #C7C7CC; font-size: 22px; }
+  /* ===== 肠道周报 ===== */
+  .rp-hero { display: flex; flex-direction: column; align-items: center; background: linear-gradient(160deg, #34C759 0%, #2BA84B 100%); color: #fff; }
+  .hero-range { font-size: 12px; opacity: 0.9; }
+  .hero-grade { font-size: 36px; margin: 8px 0 2px; }
+  .hero-score { font-size: 40px; font-weight: 700; line-height: 1; }
+  .hero-score-unit { font-size: 16px; font-weight: 400; }
+  .hero-title { font-size: 17px; font-weight: 600; margin-top: 5px; }
+  .hero-comment { margin-top: 9px; font-size: 12px; line-height: 1.6; text-align: center; background: rgba(255,255,255,0.18); padding: 8px 10px; border-radius: 9px; }
+  .metrics { display: flex; gap: 6px; margin-bottom: 12px; }
+  .metric { flex: 1; background: #fff; border-radius: 14px; padding: 12px 0; display: flex; flex-direction: column; align-items: center; }
+  .metric-num { font-size: 19px; font-weight: 700; }
+  .metric-unit { font-size: 11px; color: #8E8E93; font-weight: 400; }
+  .metric-label { margin-top: 3px; font-size: 11px; color: #8E8E93; }
+  .dist-row { display: flex; align-items: center; margin-bottom: 9px; }
+  .dist-row:last-child { margin-bottom: 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-right: 8px; }
+  .dist-name { width: 90px; font-size: 12px; color: #1C1C1E; flex-shrink: 0; }
+  .dist-bar { flex: 1; height: 8px; background: #F0F0F3; border-radius: 4px; overflow: hidden; }
+  .dist-fill { height: 100%; border-radius: 4px; }
+  .dist-pct { width: 36px; text-align: right; font-size: 11px; color: #8E8E93; flex-shrink: 0; }
+  .cols { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .tag-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .tag-row:last-child { margin-bottom: 0; }
+  .tag { font-size: 12px; color: #1C1C1E; background: #F0F0F3; padding: 3px 9px; border-radius: 999px; }
+  .tag-count { font-size: 11px; color: #8E8E93; }
+  .week { display: flex; justify-content: space-between; }
+  .wday { width: 36px; height: 48px; border-radius: 10px; background: #F2F2F7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+  .wday.on { background: #EAF6EC; }
+  .wemoji { font-size: 15px; line-height: 1; }
+  .wlabel { font-size: 10px; color: #C7C7CC; }
+  .wday.on .wlabel { color: #34C759; }
+  .tip { display: flex; align-items: flex-start; margin-bottom: 8px; }
+  .tip:last-child { margin-bottom: 0; }
+  .tip-dot { color: #34C759; font-weight: 700; margin-right: 6px; line-height: 1.6; }
+  .tip-text { flex: 1; font-size: 12px; color: #1C1C1E; line-height: 1.6; }
+  .share-canvas { width: 100%; height: 900px; border-radius: 12px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+  .btn-save { margin-top: 12px; width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 11px 0; cursor: pointer; }
+  .btn-save:active { opacity: 0.85; }
 
   .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
   .hero-icon {
@@ -604,6 +643,142 @@ function drawRing(ctx, w, h, opt) {
   if (opt.centerTop) { ctx.fillStyle = opt.centerColor || '#1C1C1E'; ctx.font = '600 22px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(String(opt.centerTop), cx, cy + 4); }
   if (opt.centerBottom) { ctx.fillStyle = '#8E8E93'; ctx.font = '11px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(opt.centerBottom, cx, cy + 22); }
 }
+// ============ 肠道周报引擎（与 utils/report.js 同源） ============
+function bristolName(type) {
+  const it = BRISTOL.find((b) => b.type === Number(type));
+  return it ? it.name : '未知';
+}
+function wrapText(ctx, text, x, y, maxW, lh, maxLines) {
+  const chars = String(text).split('');
+  let line = '', lines = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const test = line + chars[i];
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, x, y); line = chars[i]; y += lh; lines++;
+      if (maxLines && lines >= maxLines - 1) {
+        let rest = chars.slice(i).join('');
+        while (ctx.measureText(rest).width > maxW && rest.length > 1) rest = rest.slice(0, -1);
+        if (rest !== chars.slice(i).join('')) rest += '…';
+        ctx.fillText(rest, x, y); return y + lh;
+      }
+    } else line = test;
+  }
+  if (line) ctx.fillText(line, x, y);
+  return y + lh;
+}
+function gradeOf(score) {
+  if (score >= 90) return { title: '肠道王者', emoji: '👑' };
+  if (score >= 80) return { title: '顺滑宗师', emoji: '🌟' };
+  if (score >= 70) return { title: '规律达人', emoji: '💪' };
+  if (score >= 60) return { title: '渐入佳境', emoji: '🌱' };
+  return { title: '蓄力新兵', emoji: '🐣' };
+}
+function scoreComment(r) {
+  const topSym = r.symptomTop.length ? r.symptomTop[0].name : '';
+  if (r.total === 0) return '这周肠道在放空？点一下记录，开启你的第一泡 💩';
+  if (r.daysRecorded === 7) return '七日全勤！规律的你，连肠道都给你点赞 💪';
+  if (r.score >= 90) return '肠道状态拉满，你就是本周的顺滑本滑 👑';
+  if (r.idealPct >= 60) return '理想便型占比超高，肠道给你发敬业福了 💚';
+  if (r.bestType <= 2) return '这周便便偏硬，肠道在提醒你：该补水补纤维啦 💧';
+  if (r.bestType >= 6) return '偏稀了点，肠胃有点小情绪，注意保暖和饮食清淡 🍵';
+  if (r.avgDurSec > 480) return '单次蹲坑有点久，别带手机，5 分钟内搞定更健康 📵';
+  if (topSym && topSym !== '无') return '本周小状况「' + topSym + '」出现较多，下方建议帮你减负 ↓';
+  if (r.daysRecorded < 4) return '本周打卡偏少，固定时间如厕能帮肠道建立生物钟 ⏰';
+  return '稳扎稳打的一周，继续保持，肠道会记住你的好 🌿';
+}
+function buildTips(r) {
+  const tips = [];
+  if (r.bestType <= 2) tips.push('便便偏硬：每天喝够 1.5L 水，多吃燕麦、西兰花、火龙果等膳食纤维。');
+  if (r.bestType >= 6) tips.push('偏稀溏：注意腹部保暖，少吃生冷油腻，温粥养肠最舒服。');
+  if (r.avgDurSec > 480) tips.push('蹲坑别带手机：控制在 5 分钟内，减少久坐给直肠的压力。');
+  const real = r.symptomTop.filter((s) => s.name === '出血' || s.name === '疼痛');
+  if (real.length) tips.push('出现出血 / 疼痛请及时线下就医，记录只是帮你看趋势，别硬扛。');
+  if (r.daysRecorded < 5) tips.push('建立如厕生物钟：每天固定时段（如晨起后）蹲 5 分钟，比偶尔猛补更有效。');
+  if (tips.length < 2) tips.push('均衡饮食 + 规律作息是肠道最好的朋友，记录本身就是改变的开始。');
+  if (tips.length < 3) tips.push('把「嗯嗯日记」当成每日小仪式，连续打卡 7 天解锁更多彩蛋 🎁。');
+  return tips.slice(0, 3);
+}
+function buildWeekReport(records, opts) {
+  const weekDays = opts.weekDays, streak = opts.streak || 0, list = records || [];
+  const countByDay = {};
+  list.forEach((r) => { countByDay[r.date] = (countByDay[r.date] || 0) + 1; });
+  const weekDots = weekDays.map((d) => {
+    const date = fmtDate(d), c = countByDay[date] || 0;
+    return { date, label: ['一', '二', '三', '四', '五', '六', '日'][(d.getDay() + 6) % 7], recorded: c > 0, count: c, emoji: c > 0 ? '💩' : '·' };
+  });
+  const daysRecorded = weekDots.filter((x) => x.recorded).length;
+  const total = list.length;
+  const durList = list.filter((r) => r.durationSec > 0);
+  const avgDurSec = durList.length ? Math.round(durList.reduce((s, r) => s + r.durationSec, 0) / durList.length) : 0;
+  const ideal = list.filter((r) => Number(r.bristolType) === 4).length;
+  const idealPct = total ? Math.round((ideal / total) * 100) : 0;
+  const bristolDist = BRISTOL.map((b) => {
+    const c = list.filter((r) => Number(r.bristolType) === b.type).length;
+    return { type: b.type, name: bristolName(b.type), count: c, pct: total ? Math.round((c / total) * 100) : 0, color: BRISTOL_COLORS[b.type] };
+  }).filter((x) => x.count > 0).sort((a, b) => b.count - a.count);
+  const bestType = bristolDist.length ? bristolDist[0].type : 0;
+  const symMap = {};
+  list.forEach((r) => (r.symptomTags || []).forEach((t) => { if (t && t !== '无') symMap[t] = (symMap[t] || 0) + 1; }));
+  const symptomTop = Object.keys(symMap).map((k) => ({ name: k, count: symMap[k] })).sort((a, b) => b.count - a.count).slice(0, 3);
+  const moodMap = {};
+  list.forEach((r) => { const m = r.mood || '正常'; moodMap[m] = (moodMap[m] || 0) + 1; });
+  const moodAgg = ['轻松', '正常', '不适'].filter((m) => moodMap[m]).map((m) => ({ name: m, count: moodMap[m], pct: total ? Math.round((moodMap[m] / total) * 100) : 0 }));
+  const regularity = daysRecorded / 7, idealRatio = idealPct / 100;
+  const durScore = avgDurSec ? Math.max(0, Math.min(1, 1 - Math.abs(avgDurSec - 330) / 330)) : 0.6;
+  const realSym = list.filter((r) => (r.symptomTags || []).some((t) => t && t !== '无')).length;
+  const symScore = total ? Math.max(0, 1 - realSym / total) : 0.6;
+  const score = total === 0 ? 0 : Math.round((regularity * 0.40 + idealRatio * 0.30 + durScore * 0.15 + symScore * 0.15) * 100);
+  const grade = gradeOf(score);
+  const comment = scoreComment({ total, daysRecorded, score, idealPct, bestType, avgDurSec, symptomTop });
+  const tips = buildTips({ bestType, avgDurSec, daysRecorded, symptomTop });
+  const first = weekDays[0], last = weekDays[6];
+  const rangeLabel = (first.getMonth() + 1) + '/' + first.getDate() + ' - ' + (last.getMonth() + 1) + '/' + last.getDate();
+  return { rangeLabel, daysRecorded, total, streak, score, grade, avgDurSec, avgDurText: durText(avgDurSec), idealPct, bristolDist, bestType, bestTypeName: bestType ? bristolName(bestType) : '—', symptomTop, moodAgg, weekDots, comment, tips };
+}
+function drawReportCard(ctx, w, h, r) {
+  ctx.clearRect(0, 0, w, h);
+  const R = 28;
+  roundRect(ctx, 0, 0, w, h, R); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+  const PAD = 36;
+  const grad = ctx.createLinearGradient(0, 0, w, 200);
+  grad.addColorStop(0, '#34C759'); grad.addColorStop(1, '#2BA84B');
+  ctx.save(); roundRect(ctx, 0, 0, w, h, R); ctx.clip(); ctx.fillStyle = grad; ctx.fillRect(0, 0, w, 150); ctx.restore();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#FFFFFF';
+  ctx.font = '700 30px sans-serif'; ctx.fillText('我的肠道周报', PAD, 64);
+  ctx.font = '400 20px sans-serif'; ctx.globalAlpha = 0.9; ctx.fillText(r.rangeLabel + ' · 本周', PAD, 96); ctx.globalAlpha = 1;
+  ctx.font = '44px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(r.grade.emoji, w - PAD, 96);
+  const cx = w / 2, cy = 250, rad = 78;
+  ctx.lineWidth = 18; ctx.strokeStyle = '#ECECEF'; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2); ctx.stroke();
+  const start = -Math.PI / 2, ang = (r.score / 100) * Math.PI * 2;
+  ctx.strokeStyle = '#34C759'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(cx, cy, rad, start, start + ang); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.font = '700 46px sans-serif'; ctx.fillText(String(r.score), cx, cy + 6);
+  ctx.fillStyle = '#8E8E93'; ctx.font = '400 18px sans-serif'; ctx.fillText('肠道健康分', cx, cy + 34);
+  ctx.fillStyle = '#34C759'; ctx.font = '700 22px sans-serif'; ctx.fillText(r.grade.title, cx, cy + 70);
+  const chips = [{ k: '打卡', v: r.daysRecorded + '/7' }, { k: '平均时长', v: r.avgDurText }, { k: '理想占比', v: r.idealPct + '%' }];
+  const cw = (w - PAD * 2 - 24) / 3;
+  chips.forEach((c, i) => {
+    const x = PAD + i * (cw + 12), y = 360;
+    roundRect(ctx, x, y, cw, 84, 18); ctx.fillStyle = '#F4FAF5'; ctx.fill();
+    ctx.fillStyle = '#1C1C1E'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.font = '700 26px sans-serif'; ctx.fillText(c.v, x + cw / 2, y + 42);
+    ctx.fillStyle = '#8E8E93'; ctx.font = '400 16px sans-serif'; ctx.fillText(c.k, x + cw / 2, y + 66);
+  });
+  let y = 480; ctx.textAlign = 'left'; ctx.fillStyle = '#1C1C1E'; ctx.font = '600 20px sans-serif'; ctx.fillText('一周打卡', PAD, y);
+  y += 18; const dw = (w - PAD * 2) / 7;
+  r.weekDots.forEach((d, i) => {
+    const dx = PAD + i * dw + dw / 2, dy = y + 30;
+    ctx.beginPath(); ctx.arc(dx, dy, 18, 0, Math.PI * 2); ctx.fillStyle = d.recorded ? '#EAF6EC' : '#F2F2F7'; ctx.fill();
+    ctx.font = (d.recorded ? '16px' : '18px') + ' sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.emoji, dx, dy + 1);
+    ctx.fillStyle = d.recorded ? '#34C759' : '#C7C7CC'; ctx.font = '400 13px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.fillText(d.label, dx, dy + 36);
+  });
+  y += 86; roundRect(ctx, PAD, y, w - PAD * 2, 92, 18); ctx.fillStyle = '#FFF7E6'; ctx.fill();
+  ctx.fillStyle = '#B6791F'; ctx.font = '600 17px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText('本周点评', PAD + 20, y + 32);
+  ctx.fillStyle = '#5A4A2A'; ctx.font = '400 17px sans-serif'; wrapText(ctx, r.comment, PAD + 20, y + 58, w - PAD * 2 - 40, 24, 2);
+  y += 112; ctx.fillStyle = '#1C1C1E'; ctx.font = '600 20px sans-serif'; ctx.fillText('肠道小贴士', PAD, y);
+  y += 24; ctx.font = '400 16px sans-serif';
+  r.tips.forEach((t) => { y = wrapText(ctx, '· ' + t, PAD, y, w - PAD * 2, 23, 2) + 6; });
+  ctx.fillStyle = '#C7C7CC'; ctx.font = '400 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('嗯嗯日记 · 数据来自你自己的记录', w / 2, h - 26);
+}
+
 // 取 canvas 并按 dpr 缩放后绘制（浏览器版）
 function drawCanvas2D(id, fn) {
   const el = document.getElementById(id);
@@ -765,7 +940,7 @@ const App = {
     const page = this.currentPage();
     const sub = this.stack.length > 0;
     if (sub) {
-      const titles = { history: '历史记录', remind: '提醒设置', guide: '新手引导' };
+      const titles = { history: '历史记录', remind: '提醒设置', guide: '新手引导', report: '肠道周报' };
       nav.innerHTML = '<div class="nav-left"><button class="nav-back" onclick="App.back()">‹ 返回</button></div>' +
         '<div class="nav-title" style="font-size:18px">' + titles[page] + '</div><div class="nav-actions"></div>';
       return;
@@ -809,6 +984,10 @@ const App = {
   },
 
   afterRender(page) {
+    if (page === 'report') {
+      const r = this.reportData();
+      drawCanvas2D('shareCanvas', (ctx, w, h) => drawReportCard(ctx, w, h, r));
+    }
     if (page === 'stats') {
       renderStatsCharts();
       const tc = document.getElementById('trendCanvas');
@@ -835,7 +1014,7 @@ const App = {
   },
 
   /* ================= 首页 ================= */
-  renderMap: { home: 'renderHome', record: 'renderRecord', stats: 'renderStats', community: 'renderCommunity', profile: 'renderProfile', history: 'renderHistory', remind: 'renderRemind', guide: 'renderGuide' },
+  renderMap: { home: 'renderHome', record: 'renderRecord', stats: 'renderStats', community: 'renderCommunity', profile: 'renderProfile', history: 'renderHistory', remind: 'renderRemind', guide: 'renderGuide', report: 'renderReport' },
 
   homeData() {
     const records = DB.records;
@@ -883,7 +1062,7 @@ const App = {
           '<div class="remind-sub">' + (DB.reminders.enabled ? '每天 ' + DB.reminders.time + ' · 服务通知' : '已关闭 · 点按开启提醒') + '</div></div>' +
         '<div class="switch ' + (DB.reminders.enabled ? 'on' : '') + '" onclick="App.toggleRemind(event)"><div class="knob"></div></div>' +
       '</div>' +
-      '<div class="card" onclick="App.go(\'stats\')">' +
+      '<div class="card" onclick="App.push(\'report\')">' +
         '<div class="card-title">肠道周报</div>' +
         '<div class="card-sub">连续记录 7 天，解锁专属肠道报告</div>' +
         '<div class="card-sub" style="color:#34C759;margin-top:8px;font-weight:600">去看看 ›</div>' +
@@ -1124,6 +1303,65 @@ const App = {
           ? '<div class="chip-row">' + d.symptoms.map((s) => '<span class="chip">' + s.name + ' ×' + s.count + '</span>').join('') + '</div>'
           : '<div class="empty">本周期暂无症状记录</div>') + '</div>';
   },
+  /* ================= 肠道周报 ================= */
+  reportData() {
+    const weekDays = currentWeekDays();
+    const daySet = new Set(weekDays.map((d) => fmtDate(d)));
+    const records = DB.records.filter((r) => daySet.has(r.date));
+    return buildWeekReport(records, { weekDays, streak: calcStreak() });
+  },
+  renderReport() {
+    const r = this.reportData();
+    const distHtml = r.bristolDist.length
+      ? r.bristolDist.map((b) =>
+        '<div class="dist-row"><span class="dot" style="background:' + b.color + '"></span>' +
+        '<span class="dist-name">' + b.name + '</span>' +
+        '<span class="dist-bar"><span class="dist-fill" style="width:' + b.pct + '%;background:' + b.color + '"></span></span>' +
+        '<span class="dist-pct">' + b.pct + '%</span></div>').join('')
+      : '<div class="empty">本周还没有记录，去打卡解锁吧 💩</div>';
+    const symHtml = r.symptomTop.length
+      ? r.symptomTop.map((s) => '<div class="tag-row"><span class="tag">' + s.name + '</span><span class="tag-count">' + s.count + ' 次</span></div>').join('')
+      : '<div class="empty small">无异常，状态轻松 👍</div>';
+    const moodHtml = r.moodAgg.length
+      ? r.moodAgg.map((m) => '<div class="tag-row"><span class="tag">' + m.name + '</span><span class="tag-count">' + m.pct + '%</span></div>').join('')
+      : '<div class="empty small">—</div>';
+    const weekHtml = r.weekDots.map((d) =>
+      '<div class="wday ' + (d.recorded ? 'on' : '') + '"><span class="wemoji">' + d.emoji + '</span><span class="wlabel">' + d.label + '</span></div>').join('');
+    const tipHtml = r.tips.map((t) => '<div class="tip"><span class="tip-dot">·</span><span class="tip-text">' + t + '</span></div>').join('');
+    return '' +
+      '<div class="card hero rp-hero">' +
+        '<div class="hero-range">' + r.rangeLabel + ' · 本周</div>' +
+        '<div class="hero-grade">' + r.grade.emoji + '</div>' +
+        '<div class="hero-score">' + r.score + '<span class="hero-score-unit"> 分</span></div>' +
+        '<div class="hero-title">' + r.grade.title + '</div>' +
+        '<div class="hero-comment">' + r.comment + '</div>' +
+      '</div>' +
+      '<div class="metrics">' +
+        '<div class="metric"><div class="metric-num">' + r.daysRecorded + '<span class="metric-unit">/7</span></div><div class="metric-label">打卡天数</div></div>' +
+        '<div class="metric"><div class="metric-num">' + r.avgDurText + '</div><div class="metric-label">平均时长</div></div>' +
+        '<div class="metric"><div class="metric-num">' + r.idealPct + '%</div><div class="metric-label">理想占比</div></div>' +
+        '<div class="metric"><div class="metric-num">' + r.streak + '<span class="metric-unit"> 天</span></div><div class="metric-label">连续打卡</div></div>' +
+      '</div>' +
+      '<div class="card"><div class="card-title">便型偏好</div>' + distHtml + '</div>' +
+      '<div class="cols"><div class="card col"><div class="card-title">本周小状况</div>' + symHtml + '</div>' +
+        '<div class="card col"><div class="card-title">心情分布</div>' + moodHtml + '</div></div>' +
+      '<div class="card"><div class="card-title">一周打卡</div><div class="week">' + weekHtml + '</div></div>' +
+      '<div class="card tips"><div class="card-title">肠道小贴士</div>' + tipHtml + '</div>' +
+      '<div class="card share"><div class="card-title">本周分享卡</div>' +
+        '<canvas id="shareCanvas" class="share-canvas"></canvas>' +
+        '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button></div>';
+  },
+  saveReportCard() {
+    const el = document.getElementById('shareCanvas');
+    if (!el) return;
+    try {
+      const url = el.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url; a.download = '肠道周报.png'; a.click();
+      toast('已生成分享卡（演示下载）');
+    } catch (e) { toast('生成失败'); }
+  },
+
   switchPeriod(p) { this.statsPeriod = p; this.render(); },
 
   /* ================= 广场 ================= */

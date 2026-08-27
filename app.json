@@ -4,6 +4,7 @@
     "pages/record/record",
     "pages/history/history",
     "pages/stats/stats",
+    "pages/report/report",
     "pages/remind/remind",
     "pages/community/community",
     "pages/profile/profile",

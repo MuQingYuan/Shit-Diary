@@ -235,4 +235,4 @@ function drawRing(ctx, w, h, opt) {
   }
 }
 
-module.exports = { drawTrend, drawRing, hexA };
+module.exports = { drawTrend, drawRing, hexA, roundRect };

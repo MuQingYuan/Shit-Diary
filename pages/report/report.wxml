@@ -1,0 +1,108 @@
+<view class="page">
+  <view wx:if="{{error}}" class="error-bar">
+    <text class="error-text">{{error}}</text>
+    <text class="error-retry" bindtap="load">重试</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">正在生成你的肠道周报…</view>
+
+  <block wx:elif="{{report}}">
+    <!-- 评分头卡 -->
+    <view class="card hero">
+      <view class="hero-range">{{report.rangeLabel}} · 本周</view>
+      <view class="hero-grade">{{report.grade.emoji}}</view>
+      <view class="hero-score">{{report.score}}<text class="hero-score-unit"> 分</text></view>
+      <view class="hero-title">{{report.grade.title}}</view>
+      <view class="hero-comment">{{report.comment}}</view>
+    </view>
+
+    <!-- 关键指标 -->
+    <view class="metrics">
+      <view class="metric">
+        <text class="metric-num">{{report.daysRecorded}}<text class="metric-unit">/7</text></text>
+        <text class="metric-label">打卡天数</text>
+      </view>
+      <view class="metric">
+        <text class="metric-num">{{report.avgDurText}}</text>
+        <text class="metric-label">平均时长</text>
+      </view>
+      <view class="metric">
+        <text class="metric-num">{{report.idealPct}}%</text>
+        <text class="metric-label">理想占比</text>
+      </view>
+      <view class="metric">
+        <text class="metric-num">{{report.streak}}<text class="metric-unit"> 天</text></text>
+        <text class="metric-label">连续打卡</text>
+      </view>
+    </view>
+
+    <!-- 便型偏好 -->
+    <view class="card">
+      <view class="card-title">便型偏好</view>
+      <view wx:if="{{report.bristolDist.length}}" class="dist">
+        <view class="dist-row" wx:for="{{report.bristolDist}}" wx:key="type">
+          <view class="dot" style="background:{{item.color}}"></view>
+          <text class="dist-name">{{item.name}}</text>
+          <view class="dist-bar"><view class="dist-fill" style="width:{{item.pct}}%;background:{{item.color}}"></view></view>
+          <text class="dist-pct">{{item.pct}}%</text>
+        </view>
+      </view>
+      <view wx:else class="empty">本周还没有记录，去打卡解锁吧 💩</view>
+    </view>
+
+    <!-- 症状 & 心情 -->
+    <view class="cols">
+      <view class="card col">
+        <view class="card-title">本周小状况</view>
+        <view wx:if="{{report.symptomTop.length}}">
+          <view class="tag-row" wx:for="{{report.symptomTop}}" wx:key="name">
+            <text class="tag">{{item.name}}</text>
+            <text class="tag-count">{{item.count}} 次</text>
+          </view>
+        </view>
+        <view wx:else class="empty small">无异常，状态轻松 👍</view>
+      </view>
+      <view class="card col">
+        <view class="card-title">心情分布</view>
+        <view wx:if="{{report.moodAgg.length}}">
+          <view class="tag-row" wx:for="{{report.moodAgg}}" wx:key="name">
+            <text class="tag">{{item.name}}</text>
+            <text class="tag-count">{{item.pct}}%</text>
+          </view>
+        </view>
+        <view wx:else class="empty small">—</view>
+      </view>
+    </view>
+
+    <!-- 一周打卡日历 -->
+    <view class="card">
+      <view class="card-title">一周打卡</view>
+      <view class="week">
+        <view class="wday {{item.recorded ? 'on' : ''}}" wx:for="{{report.weekDots}}" wx:key="date">
+          <text class="wemoji">{{item.emoji}}</text>
+          <text class="wlabel">{{item.label}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 健康贴士 -->
+    <view class="card tips">
+      <view class="card-title">肠道小贴士</view>
+      <view class="tip" wx:for="{{report.tips}}" wx:key="*this">
+        <text class="tip-dot">·</text>
+        <text class="tip-text">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 分享卡 -->
+    <view class="card share">
+      <view class="card-title">本周分享卡</view>
+      <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
+      <button class="btn-save" hover-class="btn-hv" loading="{{saving}}" bindtap="saveCard">
+        {{saving ? '生成中…' : '保存图片到相册'}}
+      </button>
+    </view>
+  </block>
+
+  <view class="safe-bottom"></view>
+</view>

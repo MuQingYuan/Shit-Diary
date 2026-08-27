@@ -81,7 +81,7 @@
       </view>
     </view>
 
-    <view class="card about" bindtap="goStats" hover-class="hv" hover-stay-time="80">
+    <view class="card about" bindtap="goReport" hover-class="hv" hover-stay-time="80">
       <text class="card-title">肠道周报</text>
       <text class="about-sub">连续记录 7 天，解锁专属肠道报告</text>
       <text class="about-link">去看看 ›</text>

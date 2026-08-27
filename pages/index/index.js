@@ -176,6 +176,7 @@ Page({
 
   goRecord() { wx.switchTab({ url: '/pages/record/record' }); },
   goStats() { wx.switchTab({ url: '/pages/stats/stats' }); },
+  goReport() { wx.navigateTo({ url: '/pages/report/report' }); },
   // 本周趋势 → 跳转统计页并定位到「本周」tab
   goStatsWeek() {
     const app = getApp();
