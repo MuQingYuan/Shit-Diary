@@ -101,7 +101,7 @@
       </view>
     </view>
 
-    <!-- 分享卡：点击后才生成，过程带 loading + 淡入，不突兀 -->
+    <!-- 分享卡：点击后才生成；生成后以全屏覆盖层（游戏抽卡式）展示 -->
     <view class="gen-block">
       <button wx:if="{{!shareReady && !generating}}" class="btn-gen" hover-class="btn-hv" bindtap="generateShare">
         <text class="btn-gen-ico">🖼️</text>生成周报分享卡
@@ -112,14 +112,20 @@
         <text class="gen-loading-text">正在生成专属分享卡…</text>
       </view>
 
-      <view wx:else class="share-fade">
-        <view class="card share">
-          <view class="card-title"><text class="sec-ico">🖼️</text>本周分享卡</view>
-          <canvas type="2d" id="shareCanvas" class="share-canvas"></canvas>
-          <button class="btn-save" hover-class="btn-hv" loading="{{saving}}" bindtap="saveCard">
-            {{saving ? '保存中…' : '保存图片到相册'}}
-          </button>
-        </view>
+      <button wx:else class="btn-view" hover-class="btn-hv" bindtap="openOverlay">
+        <text class="btn-view-ico">🖼️</text>查看分享卡
+      </button>
+    </view>
+
+    <!-- 全屏分享卡覆盖层（类似游戏中获得卡片） -->
+    <view wx:if="{{overlayOpen}}" class="share-mask" bindtap="closeOverlay">
+      <view class="share-card-box" catchtap="stopMask">
+        <view class="share-close" bindtap="closeOverlay">×</view>
+        <view class="share-shine"></view>
+        <canvas type="2d" id="shareCanvas" class="share-card-canvas"></canvas>
+        <button class="btn-save" hover-class="btn-hv" loading="{{saving}}" bindtap="saveCard">
+          {{saving ? '保存中…' : '保存图片到相册'}}
+        </button>
       </view>
     </view>
   </block>

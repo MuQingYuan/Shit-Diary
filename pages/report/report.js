@@ -11,6 +11,7 @@ Page({
     saving: false,
     shareReady: false,   // 分享卡是否已生成
     generating: false,   // 是否正在生成分享卡
+    overlayOpen: false,  // 分享卡是否以全屏覆盖层展示
   },
 
   onLoad() { this.load(); },
@@ -109,19 +110,33 @@ Page({
     }
   },
 
-  // 点击「生成周报分享卡」后才绘制分享卡；过程带 loading + 淡入，体验更顺滑
+  // 点击「生成周报分享卡」后才绘制分享卡；过程带 loading，完成后以全屏覆盖层展示
   generateShare() {
     if (this.data.generating || this.data.shareReady) return;
     this.setData({ generating: true });
     // 先展示「生成中」状态，稍作停顿再真正绘制，避免一闪而过显得突兀
     setTimeout(() => {
-      this.setData({ generating: false, shareReady: true }, () => {
-        this.drawCard(() => {
-          // 绘制完成后平滑滚动到分享卡位置
-          wx.pageScrollTo({ selector: '#shareCanvas', duration: 320 });
-        });
+      this.setData({ generating: false, shareReady: true, overlayOpen: true }, () => {
+        this.drawCard();
       });
     }, 420);
+  },
+
+  // 重新打开已生成的分享卡（全屏覆盖层）
+  openOverlay() {
+    if (!this.data.shareReady || this.data.overlayOpen) return;
+    this.setData({ overlayOpen: true }, () => this.drawCard());
+  },
+
+  // 关闭全屏覆盖层（保留已生成状态，可再次查看）
+  closeOverlay() { this.setData({ overlayOpen: false }); },
+
+  // 阻止点击卡片区域时冒泡关闭覆盖层
+  stopMask() {},
+
+  // 离开周报页：不保留分享卡状态，下次进入需重新生成
+  onUnload() {
+    this.setData({ shareReady: false, generating: false, overlayOpen: false });
   },
 
   // 保存分享卡到相册

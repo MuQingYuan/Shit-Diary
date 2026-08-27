@@ -111,13 +111,9 @@
 .tip-dot { color: #34C759; font-weight: 700; margin-right: 14rpx; line-height: 1.6; }
 .tip-text { flex: 1; font-size: 24rpx; color: #1C1C1E; line-height: 1.6; }
 
-/* 分享卡 */
-.share-canvas {
-  width: 100%; height: 1540rpx; border-radius: 24rpx; background: #fff;
-  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.06);
-}
+/* 分享卡：生成按钮 + 全屏覆盖层（游戏抽卡式） */
 .btn-save {
-  margin-top: 24rpx; width: 100%; background: #34C759; color: #fff;
+  margin-top: 20rpx; width: 100%; background: #34C759; color: #fff;
   font-size: 30rpx; font-weight: 500; border-radius: 26rpx; border: none; line-height: 2.6;
 }
 .btn-save::after { border: none; }
@@ -131,6 +127,13 @@
 }
 .btn-gen::after { border: none; }
 .btn-gen-ico { font-size: 30rpx; }
+.btn-view {
+  width: 100%; background: #fff; color: #34C759; font-size: 30rpx; font-weight: 500;
+  border-radius: 26rpx; border: 2rpx solid rgba(52, 199, 89, 0.5); line-height: 2.7;
+  display: flex; align-items: center; justify-content: center; gap: 12rpx;
+}
+.btn-view::after { border: none; }
+.btn-view-ico { font-size: 30rpx; }
 .gen-loading { display: flex; flex-direction: column; align-items: center; padding: 44rpx 0; }
 .spinner {
   width: 48rpx; height: 48rpx; border-radius: 50%;
@@ -139,10 +142,53 @@
 }
 .gen-loading-text { margin-top: 18rpx; font-size: 24rpx; color: #8E8E93; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.share-fade { animation: fadeUp 0.42s ease both; }
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18rpx); }
-  to { opacity: 1; transform: translateY(0); }
+
+/* 全屏覆盖层（类似游戏中获得卡片） */
+.share-mask {
+  position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 1000;
+  background: rgba(18, 18, 26, 0.78);
+  display: flex; align-items: center; justify-content: center;
+  padding: 56rpx 40rpx calc(env(safe-area-inset-bottom) + 40rpx);
+  box-sizing: border-box; overflow-y: auto;
+  animation: maskFade 0.28s ease both;
+}
+.share-card-box {
+  position: relative; width: 680rpx; margin: auto;
+  display: flex; flex-direction: column; align-items: center;
+  transform-origin: center center;
+  animation: cardReveal 0.56s cubic-bezier(0.18, 0.89, 0.32, 1.12) both;
+}
+@keyframes maskFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cardReveal {
+  0% { opacity: 0; transform: scale(0.5) translateY(60rpx) rotateZ(-7deg); }
+  55% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) translateY(0) rotateZ(0); }
+}
+.share-card-canvas {
+  width: 680rpx; height: 1540rpx; border-radius: 30rpx; background: #fff;
+  box-shadow: 0 24rpx 70rpx rgba(0, 0, 0, 0.45);
+  display: block;
+}
+/* 顶部高光扫过（抽卡闪光感） */
+.share-shine {
+  position: absolute; top: 0; left: -40rpx; z-index: 3;
+  width: 120rpx; height: 100%;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+  transform: skewX(-18deg);
+  animation: shine 0.9s ease 0.28s both;
+  pointer-events: none; border-radius: 30rpx;
+}
+@keyframes shine {
+  0% { left: -40rpx; opacity: 0; }
+  20% { opacity: 1; }
+  100% { left: 680rpx; opacity: 0; }
+}
+.share-close {
+  position: absolute; top: -20rpx; right: -20rpx; z-index: 4;
+  width: 64rpx; height: 64rpx; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94); color: #1C1C1E;
+  font-size: 42rpx; line-height: 60rpx; text-align: center;
+  box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.3);
 }
 
 .safe-bottom { height: env(safe-area-inset-bottom); }

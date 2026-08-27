@@ -137,17 +137,35 @@
   .tip:last-child { margin-bottom: 0; }
   .tip-dot { color: #34C759; font-weight: 700; margin-right: 6px; line-height: 1.6; }
   .tip-text { flex: 1; font-size: 12px; color: #1C1C1E; line-height: 1.6; }
-  .share-canvas { width: 100%; height: 770px; border-radius: 12px; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-  .btn-save { margin-top: 12px; width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 11px 0; cursor: pointer; }
+  .btn-save { margin-top: 10px; width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 11px 0; cursor: pointer; }
   .btn-save:active { opacity: 0.85; }
   .btn-gen { width: 100%; background: #34C759; color: #fff; font-size: 15px; font-weight: 500; border: none; border-radius: 13px; padding: 13px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .btn-gen-ico { font-size: 16px; }
+  .btn-view { width: 100%; background: #fff; color: #34C759; font-size: 15px; font-weight: 500; border: 1px solid rgba(52,199,89,0.5); border-radius: 13px; padding: 12px 0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-view-ico { font-size: 16px; }
   .gen-loading { display: flex; flex-direction: column; align-items: center; padding: 22px 0; }
   .spinner { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(52,199,89,0.22); border-top-color: #34C759; animation: spin 0.8s linear infinite; }
   .gen-loading-text { margin-top: 9px; font-size: 12px; color: #8E8E93; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .share-fade { animation: fadeUp 0.42s ease both; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* 全屏覆盖层（类似游戏中获得卡片） */
+  #overlayRoot:empty { display: none; }
+  .share-mask { position: absolute; inset: 0; z-index: 60; background: rgba(18,18,26,0.78); display: flex; align-items: center; justify-content: center; padding: 30px 20px; box-sizing: border-box; overflow-y: auto; animation: maskFade 0.28s ease both; }
+  .share-card-box { position: relative; width: 320px; margin: auto; display: flex; flex-direction: column; align-items: center; transform-origin: center center; animation: cardReveal 0.56s cubic-bezier(0.18,0.89,0.32,1.12) both; }
+  @keyframes maskFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes cardReveal {
+    0% { opacity: 0; transform: scale(0.5) translateY(30px) rotateZ(-7deg); }
+    55% { opacity: 1; }
+    100% { opacity: 1; transform: scale(1) translateY(0) rotateZ(0); }
+  }
+  .share-card-canvas { width: 320px; height: 770px; border-radius: 16px; background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,0.45); display: block; }
+  .share-shine { position: absolute; top: 0; left: -22px; z-index: 3; width: 64px; height: 100%; background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%); transform: skewX(-18deg); animation: shine 0.9s ease 0.28s both; pointer-events: none; border-radius: 16px; }
+  @keyframes shine {
+    0% { left: -22px; opacity: 0; }
+    20% { opacity: 1; }
+    100% { left: 320px; opacity: 0; }
+  }
+  .share-close { position: absolute; top: -12px; right: -12px; z-index: 4; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.94); color: #1C1C1E; font-size: 21px; line-height: 30px; text-align: center; box-shadow: 0 3px 9px rgba(0,0,0,0.3); cursor: pointer; }
 
   .hero { display: flex; flex-direction: column; align-items: center; text-align: center; }
   .hero-icon {
@@ -493,6 +511,7 @@
   <div class="tabbar" id="tabbar"></div>
   <div id="toast"></div>
   <div id="modal"></div>
+  <div id="overlayRoot"></div>
   <div class="quick-mask" id="quickMask" onclick="App.closeQuick()">
     <div class="quick-panel" onclick="event.stopPropagation()">
       <div class="qp-title">快捷记录</div>
@@ -951,6 +970,7 @@ const App = {
   noteExpanded: false,
   shareReady: false,   // 分享卡是否已生成
   generating: false,   // 是否正在生成分享卡
+  overlayOpen: false,  // 分享卡是否以全屏覆盖层展示
 
   init() {
     loadDB();
@@ -966,6 +986,7 @@ const App = {
   },
 
   go(tab) {
+    this.resetReportShare();
     this.stack = [];
     this.tab = tab;
     this.renderNav();
@@ -976,12 +997,14 @@ const App = {
   goStatsWeek() { this.statsPeriod = 'week'; this.go('stats'); },
 
   push(page) {
+    this.resetReportShare();
     this.stack.push(page);
     this.renderNav();
     this.render();
     this.resetScroll();
   },
   back() {
+    this.resetReportShare();
     this.stack.pop();
     this.renderNav();
     this.render();
@@ -1043,15 +1066,23 @@ const App = {
     const p = this.currentPage();
     page.innerHTML = this[this.renderMap[p]]();
     this.afterRender(p);
+    this.renderOverlay();
+  },
+
+  // 管理全屏分享卡覆盖层（仅在 overlayOpen 且已生成时挂载并绘制）
+  renderOverlay() {
+    const root = document.getElementById('overlayRoot');
+    if (!root) return;
+    if (this.overlayOpen && this.shareReady) {
+      root.innerHTML = this.shareOverlayHtml();
+      const r = this.reportData();
+      drawCanvas2D('shareCanvas', (ctx, w, h) => drawReportCard(ctx, w, h, r));
+    } else {
+      root.innerHTML = '';
+    }
   },
 
   afterRender(page) {
-    if (page === 'report') {
-      if (this.shareReady) {
-        const r = this.reportData();
-        drawCanvas2D('shareCanvas', (ctx, w, h) => drawReportCard(ctx, w, h, r));
-      }
-    }
     if (page === 'stats') {
       renderStatsCharts();
       const tc = document.getElementById('trendCanvas');
@@ -1418,7 +1449,7 @@ const App = {
       '<div class="card tips"><div class="card-title"><span class="sec-ico">💡</span>肠道小贴士</div>' + tipHtml + '</div>' +
       this.shareBlockHtml();
   },
-  // 分享卡按需生成：未生成→按钮；生成中→loading；已生成→卡片
+  // 分享卡按需生成：未生成→按钮；生成中→loading；已生成→「查看分享卡」按钮
   shareBlockHtml() {
     if (!this.shareReady) {
       if (this.generating) {
@@ -1426,11 +1457,19 @@ const App = {
       }
       return '<button class="btn-gen" onclick="App.generateShare()"><span class="btn-gen-ico">🖼️</span>生成周报分享卡</button>';
     }
-    return '<div class="card share share-fade"><div class="card-title"><span class="sec-ico">🖼️</span>本周分享卡</div>' +
-      '<canvas id="shareCanvas" class="share-canvas"></canvas>' +
-      '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button></div>';
+    return '<button class="btn-view" onclick="App.openOverlay()"><span class="btn-view-ico">🖼️</span>查看分享卡</button>';
   },
-  // 点击生成：先显示 loading，短暂停顿后再绘制并淡入，体验顺滑
+  // 全屏覆盖层（游戏抽卡式展示）
+  shareOverlayHtml() {
+    return '<div class="share-mask" onclick="App.closeOverlay()">' +
+      '<div class="share-card-box" onclick="event.stopPropagation()">' +
+        '<div class="share-close" onclick="App.closeOverlay()">×</div>' +
+        '<div class="share-shine"></div>' +
+        '<canvas id="shareCanvas" class="share-card-canvas"></canvas>' +
+        '<button class="btn-save" onclick="App.saveReportCard()">保存图片到相册</button>' +
+      '</div></div>';
+  },
+  // 点击生成：先显示 loading，短暂停顿后再以全屏覆盖层展示并绘制
   generateShare() {
     if (this.shareReady || this.generating) return;
     this.generating = true;
@@ -1438,10 +1477,26 @@ const App = {
     setTimeout(() => {
       this.generating = false;
       this.shareReady = true;
+      this.overlayOpen = true;
       this.render();
-      const page = document.getElementById('page');
-      if (page) page.scrollTop = page.scrollHeight;
     }, 480);
+  },
+  // 重新打开已生成的分享卡（全屏覆盖层）
+  openOverlay() {
+    if (!this.shareReady || this.overlayOpen) return;
+    this.overlayOpen = true;
+    this.render();
+  },
+  // 关闭全屏覆盖层（保留已生成状态，可再次查看）
+  closeOverlay() {
+    this.overlayOpen = false;
+    this.renderOverlay();
+  },
+  // 离开周报页：不保留分享卡状态，下次进入需重新生成
+  resetReportShare() {
+    this.shareReady = false;
+    this.generating = false;
+    this.overlayOpen = false;
   },
   saveReportCard() {
     const el = document.getElementById('shareCanvas');
