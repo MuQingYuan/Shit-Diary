@@ -1,7 +1,6 @@
 const { call } = require('../../utils/cloud');
 const { buildWeekReport, drawReportCard } = require('../../utils/report');
-
-const pad = (n) => (n < 10 ? '0' + n : '' + n);
+const { currentWeekDays } = require('../../utils/date');
 
 Page({
   data: {
@@ -17,25 +16,9 @@ Page({
   onLoad() { this.load(); },
   onPullDownRefresh() { this.load().finally(() => wx.stopPullDownRefresh()); },
 
-  // 本周一至周日的 7 个 Date（周一开头）
-  currentWeekDays() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const offset = (today.getDay() + 6) % 7;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - offset);
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      days.push(d);
-    }
-    return days;
-  },
-
   load() {
     this.setData({ state: 'loading', error: '' });
-    const weekDays = this.currentWeekDays();
+    const weekDays = currentWeekDays();
     const start = new Date(weekDays[0]); start.setHours(0, 0, 0, 0);
     const end = new Date(weekDays[6]); end.setHours(23, 59, 59, 999);
     const range = { start: start.getTime(), end: end.getTime() };

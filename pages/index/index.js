@@ -1,8 +1,13 @@
 const { call } = require('../../utils/cloud');
+const { WEEK_LABELS } = require('../../utils/date');
+const { pad, fmtDate } = require('../../utils/format');
 
-const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
-const pad = (n) => (n < 10 ? '0' + n : '' + n);
-const fmtDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+// 快捷面板时长文案（简化版）。注意：0 秒显示「0秒」，与 utils/format.durText 的「—」不同，
+// 故页面内独立保留，避免改动快记面板在「0 分钟」时的展示行为。
+function durText(sec) {
+  if (sec < 60) return sec + '秒';
+  return Math.round(sec / 60) + '分钟';
+}
 
 Page({
   data: {
@@ -75,16 +80,12 @@ Page({
   },
 
   // ===== 半屏快捷记录面板 =====
-  durText(sec) {
-    if (sec < 60) return sec + '秒';
-    return Math.round(sec / 60) + '分钟';
-  },
 
   openQuick() {
     const f = this.data.quickForm;
     this.setData({
       showQuick: true,
-      quickDurText: this.durText(f.durationSec),
+      quickDurText: durText(f.durationSec),
       quickDurMin: String(Math.round(f.durationSec / 60)),
     });
   },
@@ -105,12 +106,12 @@ Page({
     let min = parseInt(e.detail.value, 10);
     if (isNaN(min)) min = 0;
     min = Math.max(0, Math.min(90, min)); // 0~90 分钟（最长 1 小时 30 分钟）
-    this.setData({ 'quickForm.durationSec': min * 60, quickDurText: this.durText(min * 60), quickDurMin: String(min) });
+    this.setData({ 'quickForm.durationSec': min * 60, quickDurText: durText(min * 60), quickDurMin: String(min) });
   },
 
   quickPreset(e) {
     const sec = Number(e.currentTarget.dataset.sec);
-    this.setData({ 'quickForm.durationSec': sec, quickDurText: this.durText(sec), quickDurMin: String(Math.round(sec / 60)) });
+    this.setData({ 'quickForm.durationSec': sec, quickDurText: durText(sec), quickDurMin: String(Math.round(sec / 60)) });
   },
 
   // 面板确认 → 提交云函数

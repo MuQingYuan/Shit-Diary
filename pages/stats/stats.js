@@ -1,8 +1,7 @@
-const { pad } = require('../../utils/format');
+const { pad, todayStr } = require('../../utils/format');
 const { BRISTOL, BRISTOL_COLORS } = require('../../utils/constants');
 const { drawTrend, drawRing } = require('../../utils/chart');
-
-const WEEK_LABELS = ['日', '一', '二', '三', '四', '五', '六'];
+const { WEEK_LABELS, currentWeekDays, currentWeekRange, currentMonthRange } = require('../../utils/date');
 
 Page({
   data: {
@@ -41,7 +40,7 @@ Page({
   load() {
     this.setData({ loading: true });
     const isWeek = this.data.period === 'week';
-    const range = isWeek ? this.currentWeekRange() : this.currentMonthRange();
+    const range = isWeek ? currentWeekRange() : currentMonthRange();
 
     const db = wx.cloud.database();
     db.collection('records')
@@ -52,42 +51,6 @@ Page({
       .then((res) => this.compute(res.data, isWeek))
       .catch(() => { this.compute([], isWeek); })
       .finally(() => this.setData({ loading: false }));
-  },
-
-  // 当前自然周（周一 00:00:00 ~ 周日 23:59:59）
-  currentWeekRange() {
-    const days = this.currentWeekDays();
-    const start = new Date(days[0]);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(days[6]);
-    end.setHours(23, 59, 59, 999);
-    return { start: start.getTime(), end: end.getTime() };
-  },
-
-  // 当前自然月（1 号 00:00:00 ~ 月末 23:59:59）
-  currentMonthRange() {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start: start.getTime(), end: end.getTime() };
-  },
-
-  // 本周一至周日的 7 个 Date（周一开头）
-  currentWeekDays() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const offset = (today.getDay() + 6) % 7; // 距本周一的天数
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - offset);
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      days.push(d);
-    }
-    return days;
   },
 
   compute(list, isWeek) {
@@ -108,7 +71,7 @@ Page({
     const bars = [];
     if (isWeek) {
       // 本周：周一到周日，按自然周顺序
-      this.currentWeekDays().forEach((d) => {
+      currentWeekDays().forEach((d) => {
         const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         const count = countByDay[date] || 0;
         bars.push({
@@ -166,7 +129,7 @@ Page({
     });
     this._trendCfg = { labels: bars.map((b) => b.day), values: bars.map((b) => b.count), tipLabels };
     // 默认高亮今天
-    const todayIdx = bars.findIndex((b) => b.date === this.todayStr());
+    const todayIdx = bars.findIndex((b) => b.date === todayStr());
     this._tipIndex = todayIdx >= 0 ? todayIdx : 0;
     this._geo = null;
 
@@ -179,11 +142,6 @@ Page({
       dist,
       symptoms,
     }, () => this.drawCharts());
-  },
-
-  todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   },
 
   // 点击折线：根据 x 坐标命中最近的数据点并高亮
