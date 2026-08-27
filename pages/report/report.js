@@ -37,27 +37,48 @@ Page({
     const end = new Date(weekDays[6]); end.setHours(23, 59, 59, 999);
     const range = { start: start.getTime(), end: end.getTime() };
 
-    let recP, homeP;
+    // 云是否可用（占位 env / 未初始化时直接降级，避免无限 loading）
+    let cloudReady = false;
+    try { cloudReady = !!(wx.cloud && wx.cloud.database && wx.cloud.database()); } catch (e) { cloudReady = false; }
+
+    const renderEmpty = () => {
+      this.setData({ state: 'done', report: buildWeekReport([], { weekDays, streak: 0 }) }, () => this.drawCard());
+    };
+
+    if (!cloudReady) {
+      // 没有云能力：立刻渲染空态周报，保证页面有内容
+      renderEmpty();
+      return Promise.resolve();
+    }
+
+    let fetchP;
     try {
       const db = wx.cloud.database();
-      recP = db.collection('records')
+      const recP = db.collection('records')
         .where({ timestamp: db.command.gte(range.start).and(db.command.lte(range.end)) })
         .orderBy('timestamp', 'desc').limit(500).get()
         .catch(() => ({ data: [] }));
-      homeP = call('getHomeData').catch(() => null);
+      const homeP = (wx.cloud.callFunction ? call('getHomeData') : Promise.resolve(null)).catch(() => null);
+      fetchP = Promise.all([recP, homeP]).then((res) => ({
+        records: (res[0] && res[0].data) || [],
+        streak: (res[1] && res[1].streak) || 0,
+      }));
     } catch (e) {
-      // 云环境未初始化等同步异常：降级为空数据，保证页面可渲染
-      recP = Promise.resolve({ data: [] });
-      homeP = Promise.resolve(null);
+      // 同步异常（云未就绪等）：降级为空数据
+      fetchP = Promise.resolve({ records: [], streak: 0 });
     }
 
-    return Promise.all([recP, homeP]).then((res) => {
-      const records = (res[0] && res[0].data) || [];
-      const streak = (res[1] && res[1].streak) || 0;
+    // 兜底超时：云查询挂起（占位 env 常见问题）时，2.5s 后强制渲染空态周报
+    const timeout = new Promise((resolve) => setTimeout(() => resolve({ records: [], streak: 0 }), 2500));
+
+    return Promise.race([fetchP, timeout]).then((res) => {
+      const records = (res && res.records) || [];
+      const streak = (res && res.streak) || 0;
       const report = buildWeekReport(records, { weekDays, streak });
       this.setData({ state: 'done', report }, () => this.drawCard());
     }).catch(() => {
-      this.setData({ state: 'error', error: '周报生成失败，请确认云环境已配置后点击重试' });
+      // 极端兜底：任何异常都渲染空态，保证页面永远有内容、不白屏
+      renderEmpty();
     });
   },
 
@@ -65,18 +86,23 @@ Page({
   drawCard() {
     const report = this.data.report;
     if (!report) return;
-    const q = wx.createSelectorQuery();
-    q.select('#shareCanvas').fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) return;
-      const canvas = res[0].node;
-      const ctx = canvas.getContext('2d');
-      let dpr = 2;
-      try { dpr = (wx.getSystemInfoSync && wx.getSystemInfoSync().pixelRatio) || 2; } catch (e) { dpr = 2; }
-      canvas.width = res[0].width * dpr;
-      canvas.height = res[0].height * dpr;
-      ctx.scale(dpr, dpr);
-      drawReportCard(ctx, res[0].width, res[0].height, report);
-    });
+    try {
+      const q = wx.createSelectorQuery();
+      q.select('#shareCanvas').fields({ node: true, size: true }).exec((res) => {
+        if (!res || !res[0] || !res[0].node) return;
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        let dpr = 2;
+        try { dpr = (wx.getSystemInfoSync && wx.getSystemInfoSync().pixelRatio) || 2; } catch (e) { dpr = 2; }
+        canvas.width = res[0].width * dpr;
+        canvas.height = res[0].height * dpr;
+        ctx.scale(dpr, dpr);
+        drawReportCard(ctx, res[0].width, res[0].height, report);
+      });
+    } catch (e) {
+      // 绘制失败不影响页面内容展示
+      console.warn('drawReportCard failed', e);
+    }
   },
 
   // 保存分享卡到相册
