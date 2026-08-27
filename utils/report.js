@@ -230,37 +230,37 @@ function drawReportCard(ctx, w, h, r) {
   ctx.save();
   roundRect(ctx, 0, 0, w, h, R);
   ctx.clip();
-  const grad = ctx.createLinearGradient(0, 0, w, 230);
+  const grad = ctx.createLinearGradient(0, 0, w, 190);
   grad.addColorStop(0, g.grad[0]);
   grad.addColorStop(1, g.grad[1]);
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, 220);
+  ctx.fillRect(0, 0, w, 178);
   ctx.restore();
 
   // 头文字
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '700 28px sans-serif';
-  ctx.fillText('我的肠道周报', PAD, 54);
-  ctx.font = '400 17px sans-serif';
+  ctx.font = '700 26px sans-serif';
+  ctx.fillText('我的肠道周报', PAD, 50);
+  ctx.font = '400 16px sans-serif';
   ctx.globalAlpha = 0.9;
-  ctx.fillText(r.rangeLabel + ' · 本周', PAD, 84);
+  ctx.fillText(r.rangeLabel + ' · 本周', PAD, 80);
   ctx.globalAlpha = 1;
   // 段位（右侧）
   ctx.textAlign = 'right';
-  ctx.font = '48px sans-serif';
-  ctx.fillText(g.emoji, w - PAD, 92);
-  ctx.font = '700 20px sans-serif';
-  ctx.fillText(g.title, w - PAD, 126);
-  ctx.font = '400 13px sans-serif';
-  ctx.globalAlpha = 0.88;
-  ctx.fillText('本周段位', w - PAD, 146);
+  ctx.font = '42px sans-serif';
+  ctx.fillText(g.emoji, w - PAD, 82);
+  ctx.font = '700 19px sans-serif';
+  ctx.fillText(g.title, w - PAD, 116);
+  ctx.font = '400 12px sans-serif';
+  ctx.globalAlpha = 0.85;
+  ctx.fillText('本周段位', w - PAD, 136);
   ctx.globalAlpha = 1;
 
   // 评分圆环
-  const cx = w / 2, cy = 300, rad = 70;
-  ctx.lineWidth = 16;
+  const cx = w / 2, cy = 246, rad = 58;
+  ctx.lineWidth = 14;
   ctx.strokeStyle = '#ECECEF';
   ctx.beginPath();
   ctx.arc(cx, cy, rad, 0, Math.PI * 2);
@@ -274,86 +274,86 @@ function drawReportCard(ctx, w, h, r) {
   ctx.lineCap = 'butt';
   ctx.fillStyle = '#1C1C1E';
   ctx.textAlign = 'center';
-  ctx.font = '700 46px sans-serif';
-  ctx.fillText(String(r.score), cx, cy + 2);
+  ctx.font = '700 42px sans-serif';
+  ctx.fillText(String(r.score), cx, cy - 2);
   ctx.fillStyle = '#8E8E93';
-  ctx.font = '400 16px sans-serif';
-  ctx.fillText('肠道健康分', cx, cy + 30);
+  ctx.font = '400 14px sans-serif';
+  ctx.fillText('肠道健康分', cx, cy + 24);
 
   // 关键指标
-  let y = 388;
+  let y = 320;
   const chips = [
-    { k: '打卡天数', v: r.daysRecorded + '/7' },
-    { k: '平均时长', v: r.avgDurText },
-    { k: '理想占比', v: r.idealPct + '%' },
+    { k: '打卡', v: r.daysRecorded + '/7' },
+    { k: '时长', v: r.avgDurText },
+    { k: '理想', v: r.idealPct + '%' },
   ];
   const cw = (w - PAD * 2 - 24) / 3;
   chips.forEach((c, i) => {
     const x = PAD + i * (cw + 12);
-    roundRect(ctx, x, y, cw, 84, 16);
+    roundRect(ctx, x, y, cw, 74, 16);
     ctx.fillStyle = g.soft;
     ctx.fill();
     ctx.fillStyle = '#1C1C1E';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
-    ctx.font = '700 25px sans-serif';
-    ctx.fillText(c.v, x + cw / 2, y + 42);
+    ctx.font = '700 23px sans-serif';
+    ctx.fillText(c.v, x + cw / 2, y + 38);
     ctx.fillStyle = '#8E8E93';
-    ctx.font = '400 15px sans-serif';
-    ctx.fillText(c.k, x + cw / 2, y + 66);
+    ctx.font = '400 13px sans-serif';
+    ctx.fillText(c.k, x + cw / 2, y + 60);
   });
 
   // 一周打卡
-  y += 84 + 30;
-  sectionTitle(ctx, '📅 一周打卡', PAD, y, g.color);
-  y += 30;
+  y += 74 + 22;
+  sectionTitle(ctx, '📅 本周打卡', PAD, y, g.color);
+  y += 26;
   const dw = (w - PAD * 2) / 7;
   r.weekDots.forEach((d, i) => {
     const dx = PAD + i * dw + dw / 2;
-    const dy = y + 22;
+    const dy = y + 18;
     ctx.beginPath();
-    ctx.arc(dx, dy, 17, 0, Math.PI * 2);
+    ctx.arc(dx, dy, 15, 0, Math.PI * 2);
     ctx.fillStyle = d.recorded ? g.soft : '#F2F2F7';
     ctx.fill();
-    ctx.font = (d.recorded ? '15px' : '17px') + ' sans-serif';
+    ctx.font = (d.recorded ? '13px' : '15px') + ' sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(d.emoji, dx, dy + 1);
     ctx.fillStyle = d.recorded ? g.color : '#C7C7CC';
-    ctx.font = '400 12px sans-serif';
+    ctx.font = '400 11px sans-serif';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(d.label, dx, dy + 34);
+    ctx.fillText(d.label, dx, dy + 28);
   });
 
-  // 本周点评气泡
-  y += 72;
-  const bubbleH = 92;
+  // 本周点评（紧凑气泡，2 行内）
+  y += 54;
+  const bubbleH = 86;
   roundRect(ctx, PAD, y, w - PAD * 2, bubbleH, 16);
   ctx.fillStyle = g.soft;
   ctx.fill();
   ctx.fillStyle = g.color;
-  ctx.font = '600 15px sans-serif';
+  ctx.font = '600 14px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText('本周点评', PAD + 18, y + 28);
+  ctx.fillText('本周点评', PAD + 16, y + 26);
   ctx.fillStyle = '#3A3A3A';
-  ctx.font = '400 15px sans-serif';
-  wrapText(ctx, r.comment, PAD + 18, y + 52, w - PAD * 2 - 36, 21, 2);
-
-  // 肠道小贴士
-  y += bubbleH + 26;
-  sectionTitle(ctx, '💡 肠道小贴士', PAD, y, g.color);
-  y += 28;
   ctx.font = '400 14px sans-serif';
-  r.tips.forEach((t) => {
-    y = wrapText(ctx, '· ' + t, PAD, y, w - PAD * 2, 21, 2) + 8;
+  wrapText(ctx, r.comment, PAD + 16, y + 48, w - PAD * 2 - 32, 19, 2);
+
+  // 肠道小贴士（最多 2 条，每条 1 行）
+  y += bubbleH + 20;
+  sectionTitle(ctx, '💡 肠道小贴士', PAD, y, g.color);
+  y += 24;
+  ctx.font = '400 13.5px sans-serif';
+  r.tips.slice(0, 2).forEach((t) => {
+    y = wrapText(ctx, '· ' + t, PAD, y, w - PAD * 2, 19, 1) + 9;
   });
 
   // 页脚
   ctx.fillStyle = '#C7C7CC';
-  ctx.font = '400 13px sans-serif';
+  ctx.font = '400 12px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('嗯嗯日记 · 数据来自你自己的记录', w / 2, h - 22);
+  ctx.fillText('嗯嗯日记 · 数据来自你自己的记录', w / 2, h - 18);
 }
 
 module.exports = { buildWeekReport, gradeOf, scoreComment, buildTips, drawReportCard, durText };
