@@ -1305,9 +1305,11 @@ const App = {
   },
   /* ================= 肠道周报 ================= */
   reportData() {
-    const weekDays = currentWeekDays();
-    const daySet = new Set(weekDays.map((d) => fmtDate(d)));
+    const weekDayStrs = currentWeekDays(); // 字符串数组 YYYY-MM-DD（与 r.date 同格式）
+    const daySet = new Set(weekDayStrs);
     const records = DB.records.filter((r) => daySet.has(r.date));
+    // buildWeekReport 内部用 Date 方法（getDay/getMonth），需转成 Date 对象
+    const weekDays = weekDayStrs.map((s) => new Date(s + 'T00:00:00'));
     return buildWeekReport(records, { weekDays, streak: calcStreak() });
   },
   renderReport() {
